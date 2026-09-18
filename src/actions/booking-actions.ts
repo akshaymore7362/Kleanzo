@@ -1,0 +1,475 @@
+'use server';
+
+import { prisma } from '@/lib/db';
+import { calculateBookingPricing } from '@/lib/pricing/pricing-engine';
+import { logAudit } from '@/lib/audit/audit-logger';
+import { dispatchNotification } from '@/lib/notifications/notification-service';
+import { assertWorkflowTransition } from '@/lib/booking/workflow-engine';
+
+export interface SubmitEnquiryInput {
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
+  city: string;
+  area: string;
+  address: string;
+  propertyType: string;
+  bhkType?: string;
+  propertyCondition: string;
+  requirements: string;
+  photos?: string[];
+  preferredDate: string;
+  preferredTime: string;
+}
+
+export async function submitEnquiryAction(input: SubmitEnquiryInput) {
+  try {
+    const count = await prisma.enquiry.count();
+    const enquiryCode = `ENQ-${1001 + count}`;
+
+    // Find or create customer User profile
+    let user = await prisma.user.findFirst({
+      where: { phone: input.customerPhone },
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          name: input.customerName,
+          phone: input.customerPhone,
+          email: input.customerEmail || `${input.customerPhone}@customer.kleanzo.com`,
+          password: 'customer_default_pass',
+          role: 'CUSTOMER',
+          customerProfile: { create: {} },
+        },
+      });
+    }
+
+    const enquiry = await prisma.enquiry.create({
+      data: {
+        enquiryCode,
+        customerId: user.id,
+        customerName: input.customerName,
+        customerPhone: input.customerPhone,
+        customerEmail: input.customerEmail,
+        city: input.city,
+        area: input.area,
+        address: input.address,
+        propertyType: input.propertyType,
+        bhkType: input.bhkType || '3BHK',
+        propertyCondition: input.propertyCondition,
+        requirements: input.requirements,
+        photos: input.photos ? JSON.stringify(input.photos) : undefined,
+        preferredDate: input.preferredDate,
+        preferredTime: input.preferredTime,
+        status: 'ENQUIRY_RECEIVED',
+      },
+    });
+
+    await logAudit({
+      action: 'BOOKING_CREATED',
+      entityType: 'Enquiry',
+      entityId: enquiry.id,
+      userId: user.id,
+      actorType: 'CUSTOMER',
+      metadata: { enquiryCode },
+    });
+
+    dispatchNotification({
+      event: 'BOOKING_CREATED',
+      recipientPhone: input.customerPhone,
+      recipientEmail: input.customerEmail,
+      title: `Enquiry Received #${enquiryCode}`,
+      message: `Thank you ${input.customerName}! Your Kleanzo cleaning enquiry has been received. Our operations team is preparing your custom scope & quote.`,
+    });
+
+    return { success: true, enquiryId: enquiry.id, enquiryCode };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function generateQuoteAction(
+  enquiryId: string,
+  packageName: string,
+  packagePrice: number,
+  scopeDetails: string,
+  includedServices: string[],
+  addonsItems: { serviceName: string; price: number }[],
+  performedBy: string
+) {
+  try {
+    const enquiry = await prisma.enquiry.findUnique({
+      where: { id: enquiryId },
+    });
+
+    if (!enquiry) throw new Error('Enquiry not found');
+
+    const addonsTotal = addonsItems.reduce((sum, item) => sum + item.price, 0);
+    const subtotal = packagePrice + addonsTotal;
+    const gstAmount = Math.round(subtotal * 0.18);
+    const totalAmount = subtotal + gstAmount;
+    const advanceRequired = Math.min(2500, totalAmount);
+    const balanceDue = totalAmount - advanceRequired;
+
+    const quoteCount = await prisma.quote.count();
+    const quoteCode = `QT-${1001 + quoteCount}`;
+
+    // GOLDEN RULE 1 ENFORCEMENT: Scope of Work MUST be defined!
+    if (!scopeDetails || scopeDetails.trim().length === 0) {
+      throw new Error('GOLDEN RULE 1 VIOLATION: NO SCOPE = NO BOOKING. Scope of work must be specified before generating quote.');
+    }
+
+    const quote = await prisma.quote.create({
+      data: {
+        quoteCode,
+        enquiryId,
+        customerId: enquiry.customerId,
+        packageName,
+        packagePrice,
+        addonsPrice: addonsTotal,
+        gstAmount,
+        totalAmount,
+        advanceRequired,
+        balanceDue,
+        scopeDetails,
+        includedServices: JSON.stringify(includedServices),
+        validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        status: 'QUOTE_CREATED',
+      },
+    });
+
+    await prisma.enquiry.update({
+      where: { id: enquiryId },
+      data: { status: 'QUOTE_GENERATED' },
+    });
+
+    await logAudit({
+      action: 'QUOTE_CHANGED',
+      entityType: 'Quote',
+      entityId: quote.id,
+      performedBy,
+      actorType: 'OPERATIONS',
+      metadata: { quoteCode, totalAmount, scopeDetails },
+    });
+
+    return { success: true, quote };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function acceptQuoteAndBookAction(quoteId: string, scheduledDate: string, scheduledTime: string) {
+  try {
+    const quote = await prisma.quote.findUnique({
+      where: { id: quoteId },
+      include: { enquiry: true },
+    });
+
+    if (!quote) throw new Error('Quote not found');
+    const enquiry = quote.enquiry;
+    if (!enquiry) throw new Error('Enquiry associated with quote not found');
+
+    const bookingCount = await prisma.booking.count();
+    const bookingCode = `KLZ-BK-${1001 + bookingCount}`;
+
+    const booking = await prisma.$transaction(async (tx) => {
+      // 1. Create Booking with hasScope = true (Golden Rule 1 Satisfied)
+      const newBooking = await tx.booking.create({
+        data: {
+          bookingCode,
+          enquiryId: quote.enquiryId,
+          customerId: enquiry.customerId || 'cust_default',
+          bookingStatus: 'BOOKED',
+          hasScope: true, // Golden Rule 1 Check satisfied!
+          scheduledDate,
+          scheduledTime,
+          subtotal: quote.packagePrice + quote.addonsPrice,
+          gstAmount: quote.gstAmount,
+          totalAmount: quote.totalAmount,
+          advanceAmount: quote.advanceRequired,
+          balanceAmount: quote.balanceDue,
+          paymentStatus: 'ADVANCE_PAID',
+          items: {
+            create: [
+              {
+                serviceName: quote.packageName,
+                quantity: 1,
+                unitPrice: quote.packagePrice,
+                priceSnapshot: quote.packagePrice,
+                gstSnapshot: quote.gstAmount,
+                totalSnapshot: quote.totalAmount,
+              },
+            ],
+          },
+          addresses: {
+            create: {
+              fullAddress: enquiry.address,
+              areaName: enquiry.area,
+              city: enquiry.city,
+              state: 'Maharashtra',
+              pinCode: '411001',
+            },
+          },
+          schedules: {
+            create: {
+              scheduledDate,
+              scheduledTime,
+              status: 'ACTIVE',
+            },
+          },
+          statusHistory: {
+            create: {
+              fromStatus: 'QUOTE_ACCEPTED',
+              toStatus: 'BOOKED',
+              changedBy: enquiry.customerName,
+              changedType: 'CUSTOMER',
+              remarks: 'Quote accepted and advance payment completed by customer.',
+            },
+          },
+        },
+      });
+
+      // 2. Link Quote to Booking
+      await tx.quote.update({
+        where: { id: quoteId },
+        data: { bookingId: newBooking.id, status: 'QUOTE_ACCEPTED' },
+      });
+
+      // 3. Mark Enquiry converted
+      await tx.enquiry.update({
+        where: { id: quote.enquiryId! },
+        data: { status: 'CONVERTED_TO_BOOKING' },
+      });
+
+      return newBooking;
+    });
+
+    await logAudit({
+      action: 'BOOKING_CREATED',
+      entityType: 'Booking',
+      entityId: booking.id,
+      performedBy: booking.customerId,
+      actorType: 'CUSTOMER',
+      metadata: { bookingCode: booking.bookingCode, advancePaid: booking.advanceAmount },
+    });
+
+    return { success: true, bookingId: booking.id, bookingCode: booking.bookingCode };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export interface CreateDirectBookingInput {
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
+  propertyType?: string;
+  bhkType?: string;
+  city?: string;
+  area?: string;
+  address?: string;
+  propertyCondition?: string;
+  serviceName: string;
+  packagePrice: number;
+  addedAddons?: { slug: string; name: string; price: number; quantity: number }[];
+  subtotal: number;
+  gstAmount: number;
+  totalAmount: number;
+  advanceAmount: number;
+  balanceAmount: number;
+  scheduledDate: string;
+  scheduledTime: string;
+  notes?: string;
+}
+
+export async function createCustomerDirectBookingAction(input: CreateDirectBookingInput) {
+  try {
+    const bookingCount = await prisma.booking.count();
+    const bookingCode = `KLZ-BK-${1000 + bookingCount + Math.floor(Math.random() * 100)}`;
+    const enquiryCode = `ENQ-${1000 + bookingCount}`;
+    const quoteCode = `QT-${1000 + bookingCount}`;
+
+    // 1. Find or create User
+    let user = await prisma.user.findFirst({
+      where: { phone: input.customerPhone },
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          name: input.customerName,
+          phone: input.customerPhone,
+          email: input.customerEmail || `${input.customerPhone.replace(/\D/g, '') || 'cust'}@customer.kleanzo.com`,
+          password: 'customer_default_pass',
+          role: 'CUSTOMER',
+          customerProfile: { create: {} },
+        },
+      });
+    }
+
+    // 2. Create Enquiry
+    const enquiry = await prisma.enquiry.create({
+      data: {
+        enquiryCode,
+        customerId: user.id,
+        customerName: input.customerName,
+        customerPhone: input.customerPhone,
+        customerEmail: input.customerEmail || user.email,
+        city: input.city || 'Pune',
+        area: input.area || 'Baner',
+        address: input.address || 'Customer Site Address',
+        propertyType: input.propertyType || 'Residential Apartment',
+        bhkType: input.bhkType || '3BHK',
+        propertyCondition: input.propertyCondition || 'Standard Post-Interior Handover',
+        requirements: input.notes || `Direct booking for ${input.serviceName}`,
+        preferredDate: input.scheduledDate,
+        preferredTime: input.scheduledTime,
+        status: 'CONVERTED_TO_BOOKING',
+      },
+    });
+
+    // 3. Create Quote (Scope Defined)
+    const scopeDetails = `Systematic ${input.serviceName} including ${
+      input.addedAddons && input.addedAddons.length > 0
+        ? input.addedAddons.map(a => `${a.quantity}x ${a.name}`).join(', ')
+        : 'standard handover deep cleaning & floor buffing'
+    }. Defined scope includes bedrooms, living room, kitchen, bathrooms, windows, and floors.`;
+
+    const quote = await prisma.quote.create({
+      data: {
+        quoteCode,
+        enquiryId: enquiry.id,
+        customerId: user.id,
+        packageName: input.serviceName,
+        packagePrice: input.packagePrice,
+        addonsPrice: input.subtotal - input.packagePrice,
+        gstAmount: input.gstAmount,
+        totalAmount: input.totalAmount,
+        advanceRequired: input.advanceAmount,
+        balanceDue: input.balanceAmount,
+        scopeDetails,
+        includedServices: JSON.stringify(input.addedAddons || []),
+        validUntil: input.scheduledDate,
+        status: 'QUOTE_ACCEPTED',
+      },
+    });
+
+    // 4. Create Booking
+    const booking = await prisma.booking.create({
+      data: {
+        bookingCode,
+        enquiryId: enquiry.id,
+        customerId: user.id,
+        bookingStatus: 'CLEANING_IN_PROGRESS',
+        status: 'CONFIRMED',
+        hasScope: true, // Golden Rule 1
+        inspectionCompleted: true, // Golden Rule 2
+        qcPassed: false,
+        customerApproved: false,
+        scheduledDate: input.scheduledDate,
+        scheduledTime: input.scheduledTime,
+        propertyType: input.propertyType || 'Residential Apartment',
+        subtotal: input.subtotal,
+        gstAmount: input.gstAmount,
+        totalAmount: input.totalAmount,
+        advanceAmount: input.advanceAmount,
+        balanceAmount: input.balanceAmount,
+        paymentStatus: 'ADVANCE_PAID',
+        items: {
+          create: [
+            {
+              serviceName: input.serviceName,
+              quantity: 1,
+              unitPrice: input.packagePrice,
+              priceSnapshot: input.packagePrice,
+              gstSnapshot: input.gstAmount,
+              totalSnapshot: input.totalAmount,
+            },
+          ],
+        },
+        addresses: {
+          create: {
+            fullAddress: input.address || 'Site Address',
+            areaName: input.area || 'Baner',
+            city: input.city || 'Pune',
+            state: 'Maharashtra',
+            pinCode: '411045',
+          },
+        },
+      },
+    });
+
+    // Link Quote to Booking
+    await prisma.quote.update({
+      where: { id: quote.id },
+      data: { bookingId: booking.id },
+    });
+
+    // Audit Log
+    await logAudit({
+      action: 'BOOKING_CREATED',
+      entityType: 'Booking',
+      entityId: booking.id,
+      performedBy: user.id,
+      actorType: 'CUSTOMER',
+      metadata: { bookingCode, totalAmount: input.totalAmount, advanceAmount: input.advanceAmount },
+    });
+
+    return {
+      success: true,
+      bookingId: booking.id,
+      bookingCode: booking.bookingCode,
+      scopeDetails,
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateBookingStatusAction(bookingId: string, newStatus: string, remarks?: string) {
+  try {
+    const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+    if (!booking) {
+      throw new Error('Booking not found');
+    }
+
+    const isQcPassed = newStatus === 'QC_PASSED' || newStatus === 'CUSTOMER_APPROVAL_PENDING' || newStatus === 'CUSTOMER_APPROVED' || newStatus === 'CLOSED';
+    const isInspectionDone = newStatus === 'INSPECTION_COMPLETED' || newStatus === 'CLEANING_IN_PROGRESS' || isQcPassed;
+    const isApproved = newStatus === 'CUSTOMER_APPROVED' || newStatus === 'PAYMENT_COMPLETED' || newStatus === 'CLOSED';
+
+    const updated = await prisma.booking.update({
+      where: { id: bookingId },
+      data: {
+        bookingStatus: newStatus,
+        inspectionCompleted: isInspectionDone ? true : booking.inspectionCompleted,
+        qcPassed: isQcPassed ? true : booking.qcPassed,
+        customerApproved: isApproved ? true : booking.customerApproved,
+        paymentStatus: newStatus === 'PAYMENT_COMPLETED' || newStatus === 'CLOSED' ? 'PAID' : booking.paymentStatus,
+        statusHistory: {
+          create: {
+            fromStatus: booking.bookingStatus,
+            toStatus: newStatus,
+            changedBy: 'System Admin / User',
+            changedType: 'OPERATIONS',
+            remarks: remarks || `Status changed to ${newStatus}`,
+          },
+        },
+      },
+    });
+
+    await logAudit({
+      action: 'STATUS_TRANSITION',
+      entityType: 'Booking',
+      entityId: bookingId,
+      performedBy: 'ADMIN',
+      actorType: 'OPERATIONS',
+      metadata: { fromStatus: booking.bookingStatus, toStatus: newStatus },
+    });
+
+    return { success: true, booking: updated };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+

@@ -1,0 +1,874 @@
+// Production-Grade Prisma Schema for Kleanzo Professional Cleaning Platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ==========================================
+// 1. USER & AUTHENTICATION MODELS
+// ==========================================
+
+model User {
+  id            String          @id @default(uuid())
+  email         String          @unique
+  password      String
+  name          String
+  phone         String?
+  role          String          @default("CUSTOMER") // CUSTOMER, PRO, AGENCY_ADMIN, AGENCY_STAFF, OPERATIONS, FINANCE, ADMIN, SUPER_ADMIN
+  active        Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  customerProfile CustomerProfile?
+  proProfile      ProProfile?
+  agency          Agency?
+  agencyUser      AgencyUser?
+  crewMember      CrewMember?
+  enquiries       Enquiry[]
+  quotes          Quote[]
+  bookings        Booking[]
+  payments        Payment[]
+  invoices        Invoice[]
+  reviews         Review[]
+  feedbacks       Feedback[]
+  reworkRequests  ReworkRequest[]
+  notifications   Notification[]
+  auditLogs       AuditLog[]
+}
+
+model CustomerProfile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName   String?
+  businessType  String?   // Homeowner, Architect, Interior Designer, Studio, Contractor
+  address       String?
+  city          String?
+  state         String?
+  pinCode       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  projects      Project[]
+}
+
+model ProProfile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firmName      String
+  registrationNo String?
+  gstNo         String?
+  tier          String    @default("GOLD") // SILVER, GOLD, PLATINUM
+  creditLimit   Float     @default(50000)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ==========================================
+// 2. ENQUIRY & QUOTE MODELS (Steps 1 & 2)
+// ==========================================
+
+model Enquiry {
+  id               String   @id @default(uuid())
+  enquiryCode      String   @unique // e.g. ENQ-9021
+  customerId       String?
+  customer         User?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerName     String
+  customerPhone    String
+  customerEmail    String?
+  city             String
+  area             String
+  address          String
+  propertyType     String   // Residential, Office, Studio, Handover Site
+  bhkType          String?  // 2BHK, 3BHK, 4BHK, Commercial
+  propertyCondition String  // Standard, Post-Construction, Heavy Stain, Handover
+  requirements     String   // Scope details & custom requirements
+  photos           String?  // JSON array string of photo URLs
+  preferredDate    String
+  preferredTime    String
+  status           String   @default("ENQUIRY_RECEIVED") // ENQUIRY_RECEIVED, QUOTE_GENERATED, CONVERTED_TO_BOOKING, CANCELLED
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  quote            Quote?
+  bookings         Booking[]
+}
+
+model Quote {
+  id               String    @id @default(uuid())
+  quoteCode        String    @unique // e.g. QT-9021
+  enquiryId        String?   @unique
+  enquiry          Enquiry?  @relation(fields: [enquiryId], references: [id], onDelete: SetNull)
+  bookingId        String?   @unique
+  booking          Booking?  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  agencyId         String?
+  agency           Agency?   @relation(fields: [agencyId], references: [id])
+  customerId       String?
+  customer         User?     @relation(fields: [customerId], references: [id])
+  
+  packageName      String    // e.g. 3 BHK Deep Cleaning Package
+  packagePrice     Float
+  addonsPrice      Float     @default(0)
+  gstAmount        Float     @default(0)
+  totalAmount      Float     // Customer Price
+  advanceRequired  Float     @default(2500)
+  balanceDue       Float
+  
+  // Separate Partner Financial Payout
+  partnerPayout    Float     @default(0) // Internal Payout to Fulfillment Partner
+  kleanzoRetained  Float     @default(0) // Kleanzo Revenue Margin
+  
+  scopeDetails     String    // Detailed Scope of Work string (CRITICAL: NO SCOPE = NO BOOKING)
+  includedServices String    // JSON string of included scope items
+  validUntil       String
+  status           String    @default("QUOTE_CREATED") // QUOTE_CREATED, QUOTE_ACCEPTED, QUOTE_REJECTED
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+// ==========================================
+// 3. AGENCY / PARTNER MODELS (Steps 5, 13, 14, 36)
+// ==========================================
+
+model Agency {
+  id                    String                  @id @default(uuid())
+  userId                String?                 @unique
+  user                  User?                   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name                  String
+  ownerName             String?
+  tagline               String?
+  description           String?
+  logoUrl               String?
+  verified              Boolean                 @default(true)
+  active                Boolean                 @default(true)
+  
+  // Partner Onboarding & Classification (Section 14 & 37)
+  partnerStatus         String                  @default("ACTIVE") // PARTNER_APPLIED, DOCUMENTS_PENDING, UNDER_REVIEW, APPROVED, ACTIVE, WARNING, SUSPENDED, REMOVED
+  partnerTier           String                  @default("PREFERRED") // ACTIVE, PREFERRED, HIGH_VOLUME
+  cleaningQualityRating Float                   @default(4.8)
+  onTimeRate            Float                   @default(98.5)
+  reworkRate            Float                   @default(1.2)
+  completedJobsCount    Int                     @default(48)
+  
+  rating                Float                   @default(4.8)
+  reviewCount           Int                     @default(24)
+  experienceYears       Int                     @default(5)
+  minOrderPrice         Float                   @default(2500)
+  baseHourlyRate        Float                   @default(500)
+  phone                 String
+  email                 String
+  address               String
+  city                  String
+  state                 String
+  pinCode               String
+  lat                   Float                   @default(18.5204)
+  lng                   Float                   @default(73.8567)
+  serviceRadiusKm       Float                   @default(25)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
+  agencyUsers           AgencyUser[]
+  serviceAreas          AgencyServiceArea[]
+  services              AgencyService[]
+  availabilities        AgencyAvailability[]
+  capacities            AgencyCapacity[]
+  commercialRules       AgencyCommercialRule[]
+  crewMembers           CrewMember[]
+  documents             PartnerDocument[]
+  bookings              Booking[]
+  jobs                  Job[]
+  assignments           Assignment[]
+  offers                AssignmentOffer[]
+  rejections            AssignmentRejection[]
+  quotes                Quote[]
+  reviews               Review[]
+  settlements           Settlement[]
+  partnerPayouts        PartnerPayout[]
+}
+
+model PartnerDocument {
+  id           String   @id @default(uuid())
+  agencyId     String
+  agency       Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  documentType String   // GST_CERTIFICATE, PAN_CARD, BANK_PASSBOOK, BUSINESS_AGREEMENT
+  documentUrl  String
+  status       String   @default("VERIFIED") // PENDING, VERIFIED, REJECTED
+  uploadedAt   DateTime @default(now())
+}
+
+model AgencyUser {
+  id        String   @id @default(uuid())
+  agencyId  String
+  agency    Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String   @default("AGENCY_ADMIN")
+  createdAt DateTime @default(now())
+}
+
+model AgencyServiceArea {
+  id        String   @id @default(uuid())
+  agencyId  String
+  agency    Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  city      String
+  areaName  String
+  pinCode   String
+  active    Boolean  @default(true)
+}
+
+model AgencyService {
+  id          String   @id @default(uuid())
+  agencyId    String
+  agency      Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  active      Boolean  @default(true)
+}
+
+model AgencyAvailability {
+  id        String   @id @default(uuid())
+  agencyId  String
+  agency    Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  dayOfWeek Int
+  timeSlot  String
+  active    Boolean  @default(true)
+}
+
+model AgencyCapacity {
+  id            String   @id @default(uuid())
+  agencyId      String
+  agency        Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  date          String
+  timeSlot      String
+  totalCapacity Int      @default(5)
+  bookedCapacity Int     @default(0)
+}
+
+model AgencyCommercialRule {
+  id              String   @id @default(uuid())
+  agencyId        String
+  agency          Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  commissionType  String   @default("PERCENTAGE")
+  commissionValue Float    @default(15.0)
+  active          Boolean  @default(true)
+  updatedAt       DateTime @updatedAt
+}
+
+// ==========================================
+// 4. SERVICE CATALOG & AUTHORITATIVE RATES
+// ==========================================
+
+model Service {
+  id                String            @id @default(uuid())
+  slug              String            @unique
+  name              String
+  category          String
+  description       String
+  startingPrice     Float
+  estimatedDuration String
+  suitableFor       String
+  includedFeatures  String
+  image             String
+  active            Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+
+  variants          ServiceVariant[]
+  rates             ServiceRate[]
+  bookingItems      BookingItem[]
+  agencyServices    AgencyService[]
+  bookings          Booking[]
+}
+
+model ServiceVariant {
+  id          String        @id @default(uuid())
+  serviceId   String
+  service     Service       @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  variantKey  String
+  name        String
+  description String?
+  rates       ServiceRate[]
+}
+
+model ServiceRate {
+  id            String          @id @default(uuid())
+  serviceId     String
+  service       Service         @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  variantId     String?
+  variant       ServiceVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  unit          String          @default("FIXED")
+  basePrice     Float
+  gstPercentage Float           @default(18.0)
+  effectiveFrom DateTime        @default(now())
+  active        Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+}
+
+model StainType {
+  id                   String    @id @default(uuid())
+  slug                 String    @unique
+  name                 String
+  category             String
+  description          String
+  surfaceCompatibility String
+  difficultyLevel      String
+  safetyNotice         String
+  sampleImage          String
+  createdAt            DateTime  @default(now())
+
+  bookings             Booking[]
+}
+
+// ==========================================
+// 5. BOOKING & INTERNAL JOB MODEL (Section 21 & 47)
+// ==========================================
+
+model Booking {
+  id              String                 @id @default(uuid())
+  bookingCode     String                 @unique // e.g. KLZ-BK-9021
+  enquiryId       String?
+  enquiry         Enquiry?               @relation(fields: [enquiryId], references: [id], onDelete: SetNull)
+  projectId       String?
+  project         Project?               @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  customerId      String
+  customer        User                   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  agencyId        String?
+  agency          Agency?                @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+  serviceId       String?
+  service         Service?               @relation(fields: [serviceId], references: [id])
+  stainTypeId     String?
+  stainType       StainType?             @relation(fields: [stainTypeId], references: [id])
+  surfaceType     String?
+  
+  // 10-Step Workflow State Machine
+  bookingStatus   String                 @default("ENQUIRY_RECEIVED") 
+  status          String                 @default("REQUESTED")
+  
+  // Golden Rule Enforcement Flags
+  hasScope            Boolean            @default(false) // Rule 1: NO SCOPE = NO BOOKING
+  inspectionCompleted Boolean            @default(false) // Rule 2: NO INSPECTION = NO CLEANING
+  qcPassed            Boolean            @default(false) // Rule 3: NO QC = NO HANDOVER
+  customerApproved    Boolean            @default(false) // Rule 4: NO APPROVAL = NO CLOSURE
+
+  // Customer Financial Breakdown
+  subtotal        Float                  @default(0)
+  discount        Float                  @default(0)
+  taxableAmount   Float                  @default(0)
+  gstAmount       Float                  @default(0)
+  totalAmount     Float                  // Customer Total Price
+  advanceAmount   Float                  @default(2500)
+  balanceAmount   Float                  @default(0)
+  paymentStatus   String                 @default("PENDING_ADVANCE")
+
+  // Partner Internal Financial Payout (Section 16 & 36)
+  partnerPayout   Float                  @default(0) // Internal Payout to Fulfillment Partner
+  kleanzoRetained Float                  @default(0) // Kleanzo Margin Revenue
+
+  scheduledDate   String
+  scheduledTime   String
+  propertyType    String                 @default("Residential Apartment")
+  propertyAreaSqft Int                   @default(1200)
+  reworkReason    String?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  job             Job?
+  items           BookingItem[]
+  addresses       BookingAddress[]
+  schedules       BookingSchedule[]
+  assignments     Assignment[]
+  offers          AssignmentOffer[]
+  rejections      AssignmentRejection[]
+  crewAssignments CrewAssignment[]
+  siteInspection  SiteInspection?
+  qualityCheck    QualityCheck?
+  invoice         Invoice?
+  feedback        Feedback?
+  payments        Payment[]
+  media           Media[]
+  beforeAfterMedia BeforeAfterMedia[]
+  quote           Quote?
+  review          Review?
+  reworkRequests  ReworkRequest[]
+  statusHistory   BookingStatusHistory[]
+  settlementItems SettlementItem[]
+  partnerPayouts  PartnerPayout[]
+}
+
+model Job {
+  id               String          @id @default(uuid())
+  jobCode          String          @unique // e.g. KLZ-JOB-9021
+  bookingId        String          @unique
+  booking          Booking         @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  agencyId         String?
+  agency           Agency?         @relation(fields: [agencyId], references: [id])
+  
+  scheduledDate    String
+  scheduledTime    String
+  requiredCleaners Int             @default(3)
+  specialInstructions String?
+  status           String          @default("JOB_UNASSIGNED") // JOB_UNASSIGNED, PARTNER_PENDING_ACCEPTANCE, PARTNER_ACCEPTED, INSPECTION_COMPLETED, CLEANING_IN_PROGRESS, CLEANING_COMPLETED, QC_PASSED, HANDOVER_APPROVED, COMPLETED, REJECTED
+  
+  partnerPayout    Float           @default(0)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  partnerPayoutRecord PartnerPayout?
+}
+
+model BookingItem {
+  id              String   @id @default(uuid())
+  bookingId       String
+  booking         Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  serviceId       String?
+  service         Service? @relation(fields: [serviceId], references: [id])
+  serviceName     String
+  variantKey      String?
+  unit            String   @default("FIXED")
+  quantity        Int      @default(1)
+  sqft            Int?
+  customNotes     String?
+  
+  unitPrice       Float
+  priceSnapshot   Float
+  gstSnapshot     Float
+  totalSnapshot   Float
+  createdAt       DateTime @default(now())
+}
+
+model BookingAddress {
+  id          String   @id @default(uuid())
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  fullAddress String
+  areaName    String
+  city        String
+  state       String   @default("Maharashtra")
+  pinCode     String
+  landmark    String?
+  lat         Float?
+  lng         Float?
+  createdAt   DateTime @default(now())
+}
+
+model BookingSchedule {
+  id            String   @id @default(uuid())
+  bookingId     String
+  booking       Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  scheduledDate String
+  scheduledTime String
+  status        String   @default("ACTIVE")
+  changedBy     String?
+  createdAt     DateTime @default(now())
+}
+
+model BookingStatusHistory {
+  id          String   @id @default(uuid())
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  fromStatus  String
+  toStatus    String
+  changedBy   String
+  changedType String   // CUSTOMER, OPERATIONS, AGENCY, SYSTEM
+  remarks     String?
+  createdAt   DateTime @default(now())
+}
+
+// ==========================================
+// 6. INSPECTION & QUALITY CHECK (Steps 6 & 8)
+// ==========================================
+
+model SiteInspection {
+  id                String   @id @default(uuid())
+  bookingId         String   @unique
+  booking           Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  inspectorName     String
+  actualCondition   String
+  confirmedScope    String
+  beforePhotos      String   // JSON array string
+  scopeDiscrepancy  Boolean  @default(false)
+  notes             String?
+  inspectionTime    DateTime @default(now())
+}
+
+model QualityCheck {
+  id                String   @id @default(uuid())
+  bookingId         String   @unique
+  booking           Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  supervisorName    String
+  bedroomsChecked   Boolean  @default(true)
+  livingChecked     Boolean  @default(true)
+  kitchenChecked    Boolean  @default(true)
+  bathroomsChecked  Boolean  @default(true)
+  windowsChecked    Boolean  @default(true)
+  floorsChecked     Boolean  @default(true)
+  addonsChecked     Boolean  @default(true)
+  missedWorkFound   Boolean  @default(false)
+  recleanedDetails  String?
+  afterPhotos       String   // JSON array string
+  passed            Boolean  @default(true)
+  qcTime            DateTime @default(now())
+}
+
+// ==========================================
+// 7. INVOICE & FEEDBACK (Step 10)
+// ==========================================
+
+model Invoice {
+  id              String   @id @default(uuid())
+  invoiceNumber   String   @unique // e.g. INV-2026-9021
+  bookingId       String   @unique
+  booking         Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customerId      String
+  customer        User     @relation(fields: [customerId], references: [id])
+  subtotal        Float
+  gstAmount       Float
+  totalAmount     Float
+  advancePaid     Float
+  balancePaid     Float
+  pdfUrl          String?
+  issuedAt        DateTime @default(now())
+}
+
+model Feedback {
+  id               String   @id @default(uuid())
+  bookingId        String   @unique
+  booking          Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customerId       String
+  customer         User     @relation(fields: [customerId], references: [id])
+  overallRating    Int
+  cleanlinessScore Int
+  punctualityScore Int
+  comments         String?
+  wouldRecommend   Boolean  @default(true)
+  createdAt        DateTime @default(now())
+}
+
+// ==========================================
+// 8. PAYMENT & SEPARATE PARTNER PAYOUT (Section 36 & 48)
+// ==========================================
+
+model Payment {
+  id                String               @id @default(uuid())
+  bookingId         String
+  booking           Booking              @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User                 @relation(fields: [userId], references: [id])
+  gateway           String               @default("RAZORPAY")
+  razorpayOrderId   String               @unique
+  razorpayPaymentId String?              @unique
+  razorpaySignature String?
+  amount            Float
+  advanceAmount     Float
+  balanceAmount     Float
+  currency          String               @default("INR")
+  status            String               @default("PAYMENT_PENDING")
+  verifiedAt        DateTime?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  transactions      PaymentTransaction[]
+  refunds           Refund[]
+}
+
+model PaymentTransaction {
+  id            String   @id @default(uuid())
+  paymentId     String
+  payment       Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  type          String   // ADVANCE, BALANCE, FULL
+  amount        Float
+  status        String   // SUCCESS, FAILED
+  rawResponse   String?
+  createdAt     DateTime @default(now())
+}
+
+model Refund {
+  id            String   @id @default(uuid())
+  paymentId     String
+  payment       Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  refundAmount  Float
+  reason        String
+  status        String   @default("PENDING")
+  processedAt   DateTime?
+  createdAt     DateTime @default(now())
+}
+
+model PartnerPayout {
+  id              String    @id @default(uuid())
+  payoutNo        String    @unique // e.g. PO-9021
+  jobId           String    @unique
+  job             Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  bookingId       String
+  booking         Booking   @relation(fields: [bookingId], references: [id])
+  agencyId        String
+  agency          Agency    @relation(fields: [agencyId], references: [id])
+  
+  customerPrice   Float
+  partnerPayout   Float
+  kleanzoRetained Float
+  status          String    @default("PENDING") // PENDING, PROCESSING, PAID
+  paidAt          DateTime?
+  transactionRef  String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// ==========================================
+// 9. ASSIGNMENT & MATCHING MODELS
+// ==========================================
+
+model Assignment {
+  id                String            @id @default(uuid())
+  bookingId         String
+  booking           Booking           @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  agencyId          String
+  agency            Agency            @relation(fields: [agencyId], references: [id])
+  assignedBy        String
+  status            String            @default("OFFER_SENT")
+  offerExpiresAt    DateTime
+  acceptedAt        DateTime?
+  rejectedAt        DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  offers            AssignmentOffer[]
+  rejections        AssignmentRejection[]
+}
+
+model AssignmentOffer {
+  id          String     @id @default(uuid())
+  assignmentId String
+  assignment  Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  bookingId   String
+  booking     Booking    @relation(fields: [bookingId], references: [id])
+  agencyId    String
+  agency      Agency     @relation(fields: [agencyId], references: [id])
+  matchScore  Float      @default(95.0)
+  sentAt      DateTime   @default(now())
+  expiresAt   DateTime
+  response    String?
+  respondedAt DateTime?
+}
+
+model AssignmentRejection {
+  id            String     @id @default(uuid())
+  assignmentId   String
+  assignment    Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  bookingId     String
+  booking       Booking    @relation(fields: [bookingId], references: [id])
+  agencyId      String
+  agency        Agency     @relation(fields: [agencyId], references: [id])
+  reason        String
+  rejectedBy    String
+  createdAt     DateTime   @default(now())
+}
+
+// ==========================================
+// 10. CREW & STAFF ASSIGNMENT MODELS
+// ==========================================
+
+model CrewMember {
+  id          String   @id @default(uuid())
+  agencyId    String
+  agency      Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  userId      String?  @unique
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name        String
+  phone       String
+  role        String   @default("CLEANER")
+  skills      String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  assignments CrewAssignment[]
+}
+
+model CrewAssignment {
+  id           String     @id @default(uuid())
+  bookingId    String
+  booking      Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  crewMemberId String
+  crewMember   CrewMember @relation(fields: [crewMemberId], references: [id], onDelete: Cascade)
+  roleOnJob    String     @default("CLEANER")
+  assignedAt   DateTime   @default(now())
+}
+
+// ==========================================
+// 11. PROJECT & MEDIA MODELS
+// ==========================================
+
+model Project {
+  id              String                @id @default(uuid())
+  projectCode     String                @unique
+  customerId      String
+  customerProfile CustomerProfile       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  title           String
+  clientName      String?
+  stage           String                @default("Interior Handover")
+  locationAddress String
+  city            String
+  pinCode         String
+  notes           String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  bookings        Booking[]
+  media           Media[]
+  statusHistory   ProjectStatusHistory[]
+}
+
+model ProjectStatusHistory {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  stage     String
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+model Media {
+  id          String    @id @default(uuid())
+  bookingId   String?
+  booking     Booking?  @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  projectId   String?
+  project     Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  category    String    @default("BEFORE")
+  imageUrl    String
+  caption     String?
+  uploadedBy  String?
+  uploadedAt  DateTime  @default(now())
+}
+
+model BeforeAfterMedia {
+  id          String    @id @default(uuid())
+  bookingId   String
+  booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  stage       String
+  imageUrl    String
+  caption     String?
+  uploadedAt  DateTime  @default(now())
+}
+
+model ReworkRequest {
+  id          String    @id @default(uuid())
+  bookingId   String
+  booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  requestedBy String
+  user        User      @relation(fields: [requestedBy], references: [id])
+  reason      String
+  description String
+  photos      String?
+  status      String    @default("OPEN")
+  createdAt   DateTime  @default(now())
+  resolvedAt  DateTime?
+}
+
+// ==========================================
+// 12. REVIEW, SETTLEMENT & AUDIT MODELS
+// ==========================================
+
+model Review {
+  id                  String    @id @default(uuid())
+  bookingId           String    @unique
+  booking             Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  agencyId            String
+  agency              Agency    @relation(fields: [agencyId], references: [id])
+  customerId          String
+  customer            User      @relation(fields: [customerId], references: [id])
+  rating              Float
+  qualityRating       Float     @default(5.0)
+  timelinessRating    Float     @default(5.0)
+  communicationRating Float     @default(5.0)
+  comment             String
+  createdAt           DateTime  @default(now())
+}
+
+model Settlement {
+  id              String           @id @default(uuid())
+  settlementNo    String           @unique
+  agencyId        String
+  agency          Agency           @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  periodStart     DateTime
+  periodEnd       DateTime
+  grossAmount     Float
+  kleanzoCommission Float
+  adjustments     Float            @default(0)
+  netPayable      Float
+  status          String           @default("PENDING")
+  paidAt          DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  items           SettlementItem[]
+}
+
+model SettlementItem {
+  id            String     @id @default(uuid())
+  settlementId  String
+  settlement    Settlement @relation(fields: [settlementId], references: [id], onDelete: Cascade)
+  bookingId     String
+  booking       Booking    @relation(fields: [bookingId], references: [id])
+  bookingAmount Float
+  commission    Float
+  agencyPayout  Float
+  createdAt     DateTime   @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("INFO")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model NotificationLog {
+  id        String   @id @default(uuid())
+  event     String
+  recipient String
+  channel   String
+  status    String
+  payload   String?
+  createdAt DateTime @default(now())
+}
+
+model MatchingWeightConfig {
+  id                String   @id @default("default")
+  serviceCapability Float    @default(25.0)
+  availability      Float    @default(20.0)
+  distance          Float    @default(20.0)
+  qualityRating     Float    @default(15.0)
+  experience        Float    @default(10.0)
+  price             Float    @default(5.0)
+  responseSpeed     Float    @default(5.0)
+  updatedAt         DateTime @updatedAt
+}
+
+model SystemSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorId     String?
+  actor       User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actorType   String
+  action      String
+  entityType  String
+  entityId    String
+  details     String?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+}

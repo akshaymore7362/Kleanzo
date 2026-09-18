@@ -1,0 +1,167 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --primary-yellow: #E8B619;
+    --primary-yellow-hover: #D4A512;
+    --brand-black: #111111;
+    --brand-dark: #1A1A1A;
+    --brand-light: #F5F8FA;
+    --brand-card: #FFFFFF;
+    --brand-border: #E5E7EB;
+    --text-muted: #64748B;
+  }
+
+  body {
+    background-color: var(--brand-light);
+    color: var(--brand-black);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* ===================================================
+   BUTTON HOVER & CLICK MICRO-ANIMATIONS
+   =================================================== */
+
+/* Primary Yellow Button Micro-Animation */
+button, a.btn, .btn-kleanzo {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Smooth scale & active press response on all buttons */
+button:active, a:active {
+  transform: scale(0.97) !important;
+}
+
+/* Yellow Action Button Hover Glow & Lift */
+.bg-kleanzo-yellow,
+.bg-\[\#E8B619\] {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.bg-kleanzo-yellow:hover,
+.bg-\[\#E8B619\]:hover {
+  background-color: #D4A512 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(232, 182, 25, 0.4);
+}
+
+/* Dark Button Hover Lift */
+.bg-black:hover,
+.bg-\[\#111111\]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(17, 17, 17, 0.3);
+}
+
+/* Secondary / Border Button Hover Effect */
+.border-gray-300:hover,
+.border-gray-200:hover {
+  border-color: #E8B619 !important;
+  transform: translateY(-1px);
+}
+
+/* ===================================================
+   NAVIGATION & PAGE LINK HOVER ANIMATIONS
+   =================================================== */
+
+/* Page Names & Links underline expand animation */
+.nav-link-item {
+  position: relative;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.nav-link-item:hover {
+  color: #111111 !important;
+  transform: translateY(-1px);
+}
+
+.nav-link-item::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -4px;
+  left: 50%;
+  background-color: #E8B619;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateX(-50%);
+  border-radius: 9999px;
+}
+
+.nav-link-item:hover::after {
+  width: 80%;
+}
+
+/* ===================================================
+   CARD & CONTAINER ELEVATION HOVER EFFECTS
+   =================================================== */
+
+.card-hover-effect,
+.hover-lift-card {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-hover-effect:hover,
+.hover-lift-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 35px -10px rgba(17, 17, 17, 0.1);
+  border-color: rgba(232, 182, 25, 0.5) !important;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(229, 231, 235, 0.9);
+}
+
+/* ===================================================
+   KEYFRAME ANIMATIONS
+   =================================================== */
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 0.9;
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s infinite ease-in-out;
+}
+
+@keyframes float-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-float {
+  animation: float-subtle 4s infinite ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
