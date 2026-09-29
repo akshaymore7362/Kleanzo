@@ -215,14 +215,14 @@ export default function OperationsAdminDashboard() {
 
   // 8 Metric Cards
   const metrics = [
-    { id: 'enquiries', title: 'New Enquiries', value: realStats.enquiryCount.toString(), change: '↑ 20%', color: 'bg-purple-50 text-purple-600', link: 'View Enquiries →' },
-    { id: 'quotes', title: 'Pending Quotes', value: realStats.quoteCount.toString(), change: '↑ 14%', color: 'bg-blue-50 text-blue-600', link: 'View Quotes →' },
-    { id: 'bookings', title: 'Today\'s Bookings', value: realStats.todayBookingCount.toString(), change: '↑ 12%', color: 'bg-emerald-50 text-emerald-600', link: 'View Bookings →' },
-    { id: 'unassigned', title: 'Unassigned Jobs', value: realStats.unassignedCount.toString(), change: '↑ 25%', color: 'bg-amber-50 text-amber-600', link: 'View Jobs →' },
-    { id: 'inspections', title: 'Inspections Pending', value: realStats.inspectionPendingCount.toString(), change: '↑ 33%', color: 'bg-indigo-50 text-indigo-600', link: 'View Inspections →' },
-    { id: 'cleaning', title: 'Cleaning In Progress', value: realStats.cleaningInProgressCount.toString(), change: '↑ 22%', color: 'bg-cyan-50 text-cyan-600', link: 'View Cleaning →' },
-    { id: 'qc', title: 'QC Pending', value: realStats.qcPendingCount.toString(), change: '↑ 17%', color: 'bg-pink-50 text-pink-600', link: 'View QC →' },
-    { id: 'approvals', title: 'Customer Approval Pending', value: realStats.approvalPendingCount.toString(), change: '↑ 15%', color: 'bg-orange-50 text-orange-600', link: 'View Approvals →' },
+    { id: 'enquiries', title: 'New Enquiries', value: realStats.enquiryCount.toString(), change: '↑ 20%', color: 'bg-purple-50 text-purple-600', link: 'View Enquiries →', href: '/admin/bookings' },
+    { id: 'quotes', title: 'Pending Quotes', value: realStats.quoteCount.toString(), change: '↑ 14%', color: 'bg-blue-50 text-blue-600', link: 'View Quotes →', href: '/admin/bookings' },
+    { id: 'bookings', title: 'Today\'s Bookings', value: realStats.todayBookingCount.toString(), change: '↑ 12%', color: 'bg-emerald-50 text-emerald-600', link: 'View Bookings →', href: '/admin/bookings' },
+    { id: 'unassigned', title: 'Unassigned Jobs', value: realStats.unassignedCount.toString(), change: '↑ 25%', color: 'bg-amber-50 text-amber-600', link: 'View Jobs →', href: '/admin/bookings' },
+    { id: 'inspections', title: 'Inspections Pending', value: realStats.inspectionPendingCount.toString(), change: '↑ 33%', color: 'bg-indigo-50 text-indigo-600', link: 'View Inspections →', href: '/admin/bookings' },
+    { id: 'cleaning', title: 'Cleaning In Progress', value: realStats.cleaningInProgressCount.toString(), change: '↑ 22%', color: 'bg-cyan-50 text-cyan-600', link: 'View Cleaning →', href: '/admin/bookings' },
+    { id: 'qc', title: 'QC Pending', value: realStats.qcPendingCount.toString(), change: '↑ 17%', color: 'bg-pink-50 text-pink-600', link: 'View QC →', href: '/admin/bookings' },
+    { id: 'approvals', title: 'Customer Approval Pending', value: realStats.approvalPendingCount.toString(), change: '↑ 15%', color: 'bg-orange-50 text-orange-600', link: 'View Approvals →', href: '/admin/bookings' },
   ];
 
   // Operations Pipeline Nodes
@@ -295,31 +295,31 @@ export default function OperationsAdminDashboard() {
     {
       title: 'OPERATIONS',
       items: [
-        { name: 'Customers', icon: Users },
-        { name: 'Enquiries', icon: FileText },
-        { name: 'Quotes', icon: CreditCard },
-        { name: 'Bookings', icon: Calendar },
-        { name: 'Jobs', icon: Briefcase },
-        { name: 'Assignments', icon: UserCheck },
-        { name: 'Inspections', icon: Camera },
-        { name: 'Cleaning', icon: Sparkles },
-        { name: 'QC', icon: ShieldCheck },
-        { name: 'Approvals', icon: CheckCircle2 },
+        { name: 'Customers', icon: Users, href: '/admin/bookings' },
+        { name: 'Enquiries', icon: FileText, href: '/admin/bookings' },
+        { name: 'Quotes', icon: CreditCard, href: '/admin/bookings' },
+        { name: 'Bookings', icon: Calendar, href: '/admin/bookings' },
+        { name: 'Jobs', icon: Briefcase, href: '/admin/bookings' },
+        { name: 'Assignments', icon: UserCheck, href: '/admin/bookings' },
+        { name: 'Inspections', icon: Camera, href: '/admin/bookings' },
+        { name: 'Cleaning', icon: Sparkles, href: '/admin/bookings' },
+        { name: 'QC', icon: ShieldCheck, href: '/admin/bookings' },
+        { name: 'Approvals', icon: CheckCircle2, href: '/admin/bookings' },
       ],
     },
     {
       title: 'PARTNERS',
       items: [
-        { name: 'Partners / Agencies', icon: Building2 },
-        { name: 'Partner Kit', icon: Package },
-        { name: 'Teams & Staff', icon: UserCheck },
+        { name: 'Partners / Agencies', icon: Building2, href: '/admin/partners' },
+        { name: 'Partner Kit', icon: Package, href: '/admin/partners' },
+        { name: 'Teams & Staff', icon: UserCheck, href: '/admin/partners' },
       ],
     },
     {
       title: 'FINANCE',
       items: [
-        { name: 'Invoices', icon: FileText },
-        { name: 'Partner Payouts', icon: DollarSign },
+        { name: 'Invoices', icon: FileText, href: '/admin/bookings' },
+        { name: 'Partner Payouts', icon: DollarSign, href: '/admin/bookings' },
       ],
     },
   ];
@@ -372,12 +372,9 @@ export default function OperationsAdminDashboard() {
                   const Icon = item.icon;
                   const isActive = activeSidebarItem === item.name;
                   return (
-                    <button
+                    <Link
                       key={item.name}
-                      onClick={() => {
-                        setActiveSidebarItem(item.name);
-                        showNotification(`Filtered view for ${item.name}`);
-                      }}
+                      href={item.href}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                         isActive
                           ? 'bg-[#E8B619] text-black font-extrabold shadow-xs'
@@ -386,7 +383,7 @@ export default function OperationsAdminDashboard() {
                     >
                       <Icon className={`w-4 h-4 ${isActive ? 'text-black' : 'text-gray-400'}`} />
                       {item.name}
-                    </button>
+                    </Link>
                   );
                 })}
               </div>
@@ -479,10 +476,10 @@ export default function OperationsAdminDashboard() {
           {/* TOP 8 METRIC CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {metrics.map((card) => (
-              <div
+              <Link
                 key={card.id}
-                onClick={() => showNotification(`Filtering view for ${card.title}`)}
-                className="bg-white p-5 rounded-2xl border border-gray-200 hover:border-[#E8B619] transition-all hover:shadow-md cursor-pointer group"
+                href={card.href}
+                className="bg-white p-5 rounded-2xl border border-gray-200 hover:border-[#E8B619] transition-all hover:shadow-md cursor-pointer group block"
               >
                 <div className="flex justify-between items-start mb-3">
                   <span className="text-xs font-bold text-gray-500">{card.title}</span>
@@ -494,7 +491,7 @@ export default function OperationsAdminDashboard() {
                 <div className="text-[11px] font-extrabold text-[#92400E] group-hover:underline flex items-center gap-1">
                   {card.link}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
 
@@ -707,8 +704,13 @@ export default function OperationsAdminDashboard() {
             </div>
 
             {/* Footer Actions */}
-            <div className="pt-3 flex justify-between items-center border-t border-gray-150">
-              <span className="text-[10px] text-gray-400 font-bold">Updates sync bidirectionally to Customer Tracker (/bookings)</span>
+            <div className="pt-3 flex flex-col sm:flex-row justify-between items-center border-t border-gray-150 gap-3">
+              <Link
+                href={`/admin/bookings/${selectedBookingModal.realDbId || selectedBookingModal.id}`}
+                className="text-xs font-black text-amber-900 bg-amber-100 border border-amber-300 hover:bg-amber-200 px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all"
+              >
+                Open Full Dispatch & Matching Center →
+              </Link>
               <div className="flex gap-2">
                 <button onClick={() => setSelectedBookingModal(null)} className="px-4 py-2.5 text-xs font-bold text-gray-500 hover:text-black">
                   Cancel
