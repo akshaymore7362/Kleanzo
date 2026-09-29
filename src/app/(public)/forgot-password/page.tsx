@@ -27,7 +27,9 @@ export default function ForgotPasswordPage() {
       }
 
       setSubmitted(true);
-      setMessage(res.message || 'Reset instructions sent');
+      if (res.success && 'message' in res) {
+        setMessage(res.resetUrl ? `${res.message} ${res.resetUrl}` : res.message || 'Reset instructions sent');
+      }
     } catch (err: any) {
       setError(err.message || 'Server error occurred');
       setLoading(false);

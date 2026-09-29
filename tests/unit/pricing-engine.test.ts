@@ -13,8 +13,8 @@ describe('Authoritative Pricing Engine Unit Tests', () => {
     expect(result.subtotal).toBe(12779 + 2998 + 1999); // 17,776
     expect(result.gstAmount).toBe(Math.round(17776 * 0.18)); // 3,200
     expect(result.totalAmount).toBe(17776 + 3200); // 20,976
-    expect(result.advanceAmount).toBe(2500); // Default advance ₹2,500
-    expect(result.balanceAmount).toBe(20976 - 2500); // 18,476
+    expect(result.advanceAmount).toBe(499); // Fixed advance ₹499
+    expect(result.balanceAmount).toBe(20976 - 499); // 20,477
   });
 
   test('Preserves official Kleanzo rates without rounding distortion', () => {

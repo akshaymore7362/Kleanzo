@@ -6,7 +6,6 @@ import { FeatureComparisonSection } from '@/components/home/FeatureComparisonSec
 import { HowItWorksSection } from '@/components/home/HowItWorksSection';
 import { StainDiagnosticSection } from '@/components/home/StainDiagnosticSection';
 import { WhyKleanzoSection } from '@/components/home/WhyKleanzoSection';
-import { BlogSection } from '@/components/home/BlogSection';
 import { FeaturedAgenciesSection } from '@/components/home/FeaturedAgenciesSection';
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
 import { ProjectCtaSection } from '@/components/home/ProjectCtaSection';
@@ -40,10 +39,7 @@ export default function HomePage() {
       {/* 7. Why Kleanzo & Interactive Before/After Comparison Slider */}
       <WhyKleanzoSection />
 
-      {/* 8. Animated Cleaning Guides & Blog Cards */}
-      <BlogSection />
-
-      {/* 9. Kleanzo Standards & Verified Crew Assurance */}
+      {/* 8. Kleanzo Standards & Verified Crew Assurance */}
       <FeaturedAgenciesSection />
 
       {/* 10. Verified Customer Reviews & Ratings */}

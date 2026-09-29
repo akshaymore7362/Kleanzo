@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db';
 import { hashPassword, verifyPassword, createSessionToken, setSessionCookie, clearSessionCookie } from '@/lib/auth/session';
 import { Role } from '@/lib/auth/rbac';
 import { logAudit } from '@/lib/audit/audit-logger';
+import crypto from 'crypto';
 
 export interface LoginInput {
   emailOrPhone: string;
@@ -12,12 +13,14 @@ export interface LoginInput {
 
 export async function loginAction(input: LoginInput) {
   try {
-    let identifier = (input.emailOrPhone || '').trim();
-    if (!identifier) {
-      identifier = 'admin@kleanzo.com';
+    const identifier = (input.emailOrPhone || '').trim();
+    const password = input.password || '';
+
+    if (!identifier || !password) {
+      return { success: false, error: 'Invalid email/phone or password' };
     }
 
-    let user = await prisma.user.findFirst({
+    const user = await prisma.user.findFirst({
       where: {
         OR: [
           { email: identifier },
@@ -32,28 +35,8 @@ export async function loginAction(input: LoginInput) {
       },
     });
 
-    if (!user) {
-      // Auto-create account if user doesn't exist yet for seamless access
-      let role: Role = 'CUSTOMER';
-      if (identifier.includes('admin')) role = 'ADMIN';
-      if (identifier.includes('agency')) role = 'AGENCY_ADMIN';
-
-      user = await prisma.user.create({
-        data: {
-          email: identifier.includes('@') ? identifier : `${identifier}@kleanzo.com`,
-          name: identifier.split('@')[0].toUpperCase(),
-          phone: identifier.match(/^\d+$/) ? identifier : '9876543210',
-          password: 'instant_login_pass',
-          role: role,
-          active: true,
-          ...(role === 'CUSTOMER' ? { customerProfile: { create: {} } } : {}),
-        },
-        include: {
-          agency: true,
-          agencyUser: true,
-          customerProfile: true,
-        },
-      });
+    if (!user || !user.active || !verifyPassword(password, user.password)) {
+      return { success: false, error: 'Invalid email/phone or password' };
     }
 
     const agencyId = user.agency?.id || user.agencyUser?.agencyId || undefined;
@@ -76,7 +59,7 @@ export async function loginAction(input: LoginInput) {
       action: 'LOGIN_SUCCESS',
       entity: 'User',
       entityId: user.id,
-      notes: `User logged in successfully as ${user.role} (instant module access)`,
+      notes: `User logged in successfully as ${user.role}`,
     });
 
     let redirectUrl = '/bookings';
@@ -276,21 +259,76 @@ export async function forgotPasswordAction(emailOrPhone: string) {
       };
     }
 
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    await prisma.passwordResetToken.deleteMany({ where: { userId: user.id, usedAt: null } });
+    await prisma.passwordResetToken.create({
+      data: {
+        userId: user.id,
+        tokenHash,
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+      },
+    });
+
     await logAudit({
       userId: user.id,
       role: user.role,
       action: 'FORGOT_PASSWORD_REQUEST',
       entity: 'User',
       entityId: user.id,
-      notes: `Password reset link requested for ${identifier}`,
+      notes: 'Password reset token created; delivery provider integration required.',
     });
 
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${rawToken}`;
     return {
       success: true,
-      message: 'Password reset instructions have been sent to your registered email / phone.',
+      message: process.env.NODE_ENV === 'production'
+        ? 'If an account exists for this input, password reset instructions have been sent via SMS/Email.'
+        : 'Reset token generated for local development.',
+      ...(process.env.NODE_ENV === 'production' ? {} : { resetUrl }),
     };
   } catch (error: any) {
     return { success: false, error: error.message || 'Request failed' };
+  }
+}
+
+export async function resetPasswordAction(token: string, newPassword: string) {
+  try {
+    if (!token || newPassword.length < 6) {
+      return { success: false, error: 'A valid token and password of at least 6 characters are required' };
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const resetToken = await prisma.passwordResetToken.findUnique({ where: { tokenHash } });
+    if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
+      return { success: false, error: 'This password reset link is invalid or expired' };
+    }
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: resetToken.userId },
+        data: { password: hashPassword(newPassword) },
+      }),
+      prisma.passwordResetToken.update({
+        where: { id: resetToken.id },
+        data: { usedAt: new Date() },
+      }),
+      prisma.passwordResetToken.deleteMany({
+        where: { userId: resetToken.userId, id: { not: resetToken.id } },
+      }),
+    ]);
+
+    await logAudit({
+      userId: resetToken.userId,
+      action: 'PASSWORD_RESET_COMPLETED',
+      entity: 'User',
+      entityId: resetToken.userId,
+      notes: 'Password reset token redeemed successfully',
+    });
+
+    return { success: true, redirectUrl: '/login' };
+  } catch (error: unknown) {
+    return { success: false, error: error instanceof Error ? error.message : 'Password reset failed' };
   }
 }
 

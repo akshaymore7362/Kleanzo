@@ -119,18 +119,15 @@ export function Navbar() {
               <Link href="/services#post-construction-cleaning" className="block px-3 py-2.5 rounded-xl hover:bg-gray-50 hover:text-black font-medium text-xs transition-all hover:translate-x-1">
                 Post Construction Cleaning
               </Link>
-              <Link href="/stain-removal" className="block px-3 py-2.5 rounded-xl hover:bg-gray-50 hover:text-black font-medium text-xs transition-all hover:translate-x-1">
-                Glue & Stain Removal
-              </Link>
             </div>
           </div>
 
-          <Link href="/stain-removal" className="nav-link-item text-xs">
-            Stain Removal
-          </Link>
-
           <Link href="/pro" className="nav-link-item text-xs">
             For Professionals
+          </Link>
+
+          <Link href="/partner/register" className="nav-link-item text-xs font-black text-amber-800 hover:text-black bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+            Become a Partner
           </Link>
 
           <Link href="/pricing" className="nav-link-item text-xs">
@@ -298,9 +295,6 @@ export function Navbar() {
             </Link>
             <Link href="/services" onClick={() => setMobileMenuOpen(false)} className="py-2 border-b border-gray-100 hover:text-[#E8B619] transition-colors">
               Services Catalog
-            </Link>
-            <Link href="/stain-removal" onClick={() => setMobileMenuOpen(false)} className="py-2 border-b border-gray-100 text-[#E8B619]">
-              Stain Removal Diagnostics
             </Link>
             <Link href="/pro" onClick={() => setMobileMenuOpen(false)} className="py-2 border-b border-gray-100 hover:text-[#E8B619] transition-colors">
               For Professionals & Studios

@@ -5,6 +5,7 @@ export interface ServiceItemInput {
   serviceSlug: string;
   serviceName: string;
   variantKey?: '2BHK' | '3BHK' | '4BHK' | 'OFFICE';
+  variantSlug?: string;
   quantity?: number;
   sqft?: number;
   customNotes?: string;
@@ -63,7 +64,11 @@ export function calculateBookingPrice(
     let priceLabel = '';
 
     if (item.serviceSlug === 'deep-cleaning') {
-      const variant = item.variantKey || '3BHK';
+      const variant = item.variantKey || (
+        item.variantSlug === '2-bhk' ? '2BHK' :
+        item.variantSlug === '4-bhk' ? '4BHK' :
+        item.variantSlug === 'office' ? 'OFFICE' : '3BHK'
+      );
       if (variant === 'OFFICE') {
         const sqft = item.sqft || item.quantity || 600;
         unitPrice = 15;
@@ -121,8 +126,8 @@ export function calculateBookingPrice(
   const gstAmount = Math.round(taxableAmount * 0.18);
   const totalAmount = taxableAmount + gstAmount;
 
-  // Advance Payment: ₹2,500 minimum or full total if total < ₹2,500
-  const advanceAmount = Math.min(2500, totalAmount);
+  // Advance Payment: ₹499 fixed deposit or full total if total < ₹499
+  const advanceAmount = totalAmount > 0 ? Math.min(499, totalAmount) : 0;
   const balanceAmount = Math.max(0, totalAmount - advanceAmount);
 
   return {

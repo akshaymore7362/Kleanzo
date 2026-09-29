@@ -5,6 +5,7 @@ export type AuditAction =
   | 'LOGIN_SUCCESS'
   | 'REGISTER_CUSTOMER'
   | 'FORGOT_PASSWORD_REQUEST'
+  | 'PASSWORD_RESET_COMPLETED'
   | 'BOOKING_CREATED'
   | 'BOOKING_MODIFIED'
   | 'PAYMENT_COMPLETED'
@@ -20,8 +21,16 @@ export type AuditAction =
   | 'SERVICE_COMPLETED'
   | 'HANDOVER_APPROVED'
   | 'REWORK_REQUESTED'
+  | 'FEEDBACK_SUBMITTED'
   | 'SETTLEMENT_CREATED'
-  | 'ADMIN_CONFIG_CHANGED';
+  | 'ADMIN_CONFIG_CHANGED'
+  | 'COMPLETION_VERIFIED'
+  | 'CORRECTION_REQUESTED'
+  | 'ADDITIONAL_WORK_APPROVED'
+  | 'TEAM_ASSIGNED'
+  | 'COMPLETION_SUBMITTED'
+  | 'ADDITIONAL_WORK_REQUESTED'
+  | 'ADMIN_MANUAL_ASSIGNMENT';
 
 export interface LogAuditParams {
   action: AuditAction;
@@ -37,12 +46,13 @@ export interface LogAuditParams {
   metadata?: Record<string, any>;
 }
 
-export async function logAudit(params: LogAuditParams): Promise<void> {
+export async function logAudit(params: LogAuditParams, client?: any): Promise<void> {
   try {
+    const db = client || prisma;
     const eType = params.entityType || params.entity || 'User';
     const notesStr = params.notes ? { notes: params.notes, ...params.metadata } : params.metadata;
 
-    await prisma.auditLog.create({
+    await db.auditLog.create({
       data: {
         actorType: params.actorType || params.role || 'USER',
         action: params.action,

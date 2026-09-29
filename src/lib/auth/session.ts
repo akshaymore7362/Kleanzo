@@ -82,7 +82,14 @@ export async function clearSessionCookie() {
   });
 }
 
+let mockTestUser: AuthUser | null = null;
+
+export function setMockTestUser(user: AuthUser | null) {
+  mockTestUser = user;
+}
+
 export async function getCurrentUser(): Promise<AuthUser | null> {
+  if (mockTestUser) return mockTestUser;
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;

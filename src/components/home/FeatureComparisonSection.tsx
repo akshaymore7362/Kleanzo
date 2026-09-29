@@ -153,7 +153,7 @@ export function FeatureComparisonSection() {
                 <div>
                   <div className="flex justify-between items-center mb-3">
                     <label className="text-xs font-black uppercase text-gray-500 tracking-wider flex items-center gap-1.5">
-                      <span className="w-5 h-5 rounded-full bg-black text-white font-black flex items-center justify-center text-[10px]">2</span>
+                      <span className="w-5 h-5 rounded-full bg-[#E8B619] text-black font-black flex items-center justify-center text-[10px]">2</span>
                       Property Condition & Stains:
                     </label>
                     <span className="text-xs font-extrabold text-gray-600">
@@ -173,16 +173,16 @@ export function FeatureComparisonSection() {
                         onClick={() => setCondition(cond.type)}
                         className={`p-3 rounded-2xl text-left border transition-all cursor-pointer transform active:scale-95 ${
                           condition === cond.type
-                            ? 'bg-black text-white border-black shadow-xl ring-2 ring-black -translate-y-0.5'
+                            ? 'bg-[#E8B619] text-black border-[#E8B619] shadow-md font-black -translate-y-0.5'
                             : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300 hover:bg-gray-100'
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-lg">{cond.icon}</span>
-                          {condition === cond.type && <Check className="w-4 h-4 text-[#E8B619]" />}
+                          {condition === cond.type && <Check className="w-4 h-4 text-black font-bold" />}
                         </div>
                         <div className="font-extrabold text-xs mt-1.5">{cond.label}</div>
-                        <div className={`text-[10px] font-medium mt-0.5 ${condition === cond.type ? 'text-gray-300' : 'text-gray-400'}`}>
+                        <div className={`text-[10px] font-medium mt-0.5 ${condition === cond.type ? 'text-black' : 'text-gray-400'}`}>
                           {cond.desc}
                         </div>
                       </button>
@@ -220,7 +220,7 @@ export function FeatureComparisonSection() {
               </div>
 
               {/* Right Live Price Display Box (5 Columns) */}
-              <div className="lg:col-span-5 bg-gradient-to-br from-[#111111] via-gray-900 to-black rounded-3xl p-6 sm:p-8 text-white text-center space-y-6 shadow-2xl relative overflow-hidden border border-gray-800">
+              <div className="lg:col-span-5 bg-amber-50 rounded-3xl p-6 sm:p-8 text-slate-900 text-center space-y-6 shadow-xl relative overflow-hidden border-2 border-amber-200">
                 
                 {/* Glowing Ribbon */}
                 <div className="absolute top-0 right-0 bg-[#E8B619] text-black text-[10px] font-black px-4 py-1 rounded-bl-2xl shadow-md uppercase tracking-wider">
@@ -228,35 +228,35 @@ export function FeatureComparisonSection() {
                 </div>
 
                 <div className="pt-2">
-                  <span className="text-xs text-[#E8B619] font-extrabold uppercase tracking-widest block mb-1">
+                  <span className="text-xs text-amber-900 font-extrabold uppercase tracking-widest block mb-1">
                     {bhk} • {condition} Dirt Package
                   </span>
                   
                   {/* Animated Big Price Number */}
                   <div className="flex items-center justify-center gap-3 my-2">
-                    <span className="text-4xl sm:text-6xl font-black text-white tracking-tight animate-fade-in">
+                    <span className="text-4xl sm:text-6xl font-black text-slate-900 tracking-tight animate-fade-in">
                       ₹{calculatedPrice.toLocaleString()}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
-                    <span className="line-through text-gray-500">₹{originalPrice.toLocaleString()}</span>
-                    <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded-full font-black text-[10px]">
+                  <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+                    <span className="line-through text-gray-400">₹{originalPrice.toLocaleString()}</span>
+                    <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full font-black text-[10px]">
                       25% SAVINGS
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 border border-white/10 text-[11px] text-gray-300 font-semibold space-y-1">
+                <div className="bg-white rounded-2xl p-3 border border-amber-200 text-[11px] text-slate-700 font-semibold space-y-1 shadow-xs">
                   <div className="flex justify-between">
                     <span>Package Price:</span>
-                    <span className="text-white font-bold">₹{calculatedPrice.toLocaleString()}</span>
+                    <span className="text-slate-900 font-bold">₹{calculatedPrice.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>GST (18%):</span>
-                    <span className="text-white font-bold">₹{Math.round(calculatedPrice * 0.18).toLocaleString()}</span>
+                    <span className="text-slate-900 font-bold">₹{Math.round(calculatedPrice * 0.18).toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between border-t border-white/10 pt-1 text-emerald-400 font-extrabold">
+                  <div className="flex justify-between border-t border-gray-100 pt-1 text-emerald-700 font-extrabold">
                     <span>Advance Payable (20%):</span>
                     <span>₹{Math.round(calculatedPrice * 1.18 * 0.2).toLocaleString()}</span>
                   </div>
@@ -264,12 +264,12 @@ export function FeatureComparisonSection() {
 
                 <Link
                   href="/bookings/new"
-                  className="w-full bg-[#E8B619] hover:bg-[#D4A512] text-black font-black text-xs px-6 py-4 rounded-xl shadow-xl transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider transform hover:scale-102 cursor-pointer"
+                  className="w-full bg-[#E8B619] hover:bg-[#D4A512] text-black font-black text-xs px-6 py-4 rounded-xl shadow-md transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider transform hover:scale-102 cursor-pointer"
                 >
                   Book Now With ₹{Math.round(calculatedPrice * 1.18 * 0.2).toLocaleString()} Advance <ArrowRight className="w-4 h-4" />
                 </Link>
 
-                <p className="text-[10px] text-gray-400 font-medium">
+                <p className="text-[10px] text-gray-500 font-medium">
                   ✓ Instant Schedule Confirmation • Free Cancellation 24h Prior
                 </p>
 
@@ -282,8 +282,8 @@ export function FeatureComparisonSection() {
         {/* ================= SECTION 2: ANIMATED KLEANZO ADVANTAGE COMPARISON ================= */}
         <div>
           <div className="text-center max-w-3xl mx-auto mb-10">
-            <span className="text-xs font-black uppercase tracking-widest text-white bg-black px-4 py-1.5 rounded-full inline-flex items-center gap-2 shadow-md">
-              <Zap className="w-4 h-4 text-[#E8B619]" /> THE KLEANZO ADVANTAGE
+            <span className="text-xs font-black uppercase tracking-widest text-amber-950 bg-[#FEF08A] border border-[#FDE047] px-4 py-1.5 rounded-full inline-flex items-center gap-2 shadow-xs">
+              <Zap className="w-4 h-4 text-amber-700" /> THE KLEANZO ADVANTAGE
             </span>
             <h2 className="text-3xl sm:text-5xl font-black text-[#111111] mt-4 tracking-tight">
               Why Kleanzo vs Traditional Maids?
@@ -297,14 +297,14 @@ export function FeatureComparisonSection() {
           <div className="bg-white rounded-3xl border-2 border-gray-200 shadow-2xl overflow-hidden max-w-5xl mx-auto hover:border-[#E8B619] transition-colors duration-500">
             
             {/* Table Header */}
-            <div className="grid grid-cols-12 bg-[#111111] text-white p-5 text-xs font-black uppercase tracking-wider items-center">
+            <div className="grid grid-cols-12 bg-[#FEF08A] text-amber-950 p-5 text-xs font-black uppercase tracking-wider items-center border-b border-[#FDE047]">
               <div className="col-span-6 sm:col-span-6 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#E8B619]" /> Key Cleaning Feature
+                <Sparkles className="w-4 h-4 text-amber-700" /> Key Cleaning Feature
               </div>
-              <div className="col-span-3 sm:col-span-3 text-center text-[#E8B619] font-black flex items-center justify-center gap-1">
+              <div className="col-span-3 sm:col-span-3 text-center text-amber-950 font-black flex items-center justify-center gap-1">
                 <span>Kleanzo Standard</span>
               </div>
-              <div className="col-span-3 sm:col-span-3 text-center text-gray-400 font-extrabold">
+              <div className="col-span-3 sm:col-span-3 text-center text-slate-700 font-extrabold">
                 Local Maids
               </div>
             </div>
@@ -358,7 +358,7 @@ export function FeatureComparisonSection() {
 
               <Link
                 href="/bookings/new"
-                className="w-full sm:w-auto bg-[#111111] hover:bg-[#E8B619] text-white hover:text-black font-extrabold text-xs px-8 py-3.5 rounded-xl shadow-md transition-all uppercase tracking-wider shrink-0 cursor-pointer"
+                className="w-full sm:w-auto bg-[#E8B619] hover:bg-[#D4A512] text-black font-extrabold text-xs px-8 py-3.5 rounded-xl shadow-md transition-all uppercase tracking-wider shrink-0 cursor-pointer"
               >
                 Experience The Kleanzo Difference →
               </Link>

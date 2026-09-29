@@ -22,7 +22,24 @@ async function main() {
   });
 
   // 2. Seed Services
-  const services = [
+  const servicesData = [
+    {
+      slug: 'deep-cleaning',
+      name: 'Deep Cleaning Service',
+      category: 'HANDOVER',
+      description: 'Comprehensive 6-stage deep detail cleaning for residential apartments & villas.',
+      startingPrice: 4499,
+      estimatedDuration: '4-6 Hours',
+      suitableFor: 'Homeowners, Tenants, Handover Sites',
+      includedFeatures: JSON.stringify([
+        'Full property dust extraction',
+        'Floor degreasing & scrubbing',
+        'Kitchen degreasing & tile descaling',
+        'Bathroom sanitization & mirror polish',
+        'Window track detailing',
+      ]),
+      image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
+    },
     {
       slug: 'interior-handover-cleaning',
       name: 'Interior Handover Cleaning',
@@ -90,148 +107,40 @@ async function main() {
       ]),
       image: 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?auto=format&fit=crop&w=800&q=80',
     },
-    {
-      slug: 'cement-grout-cleaning',
-      name: 'Cement & Grout Cleaning',
-      category: 'STAIN_REMOVAL',
-      description: 'Heavy duty descaling of tile grout haze, dried cement slurry, and white efflorescence stains on stone surfaces.',
-      startingPrice: 4500,
-      estimatedDuration: '4-6 Hours',
-      suitableFor: 'New tile installations, Bathrooms, Balconies',
-      includedFeatures: JSON.stringify([
-        'pH-balanced grout film removers',
-        'Rotary floor scrubbing',
-        'Corner & tile joint power detailing',
-        'Protective grout sealer application option',
-      ]),
-      image: 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-      slug: 'floor-stone-polishing',
-      name: 'Floor & Stone Deep Scrubbing',
-      category: 'SURFACE',
-      description: 'Single-disc machine scrubbing, diamond pad hone buffing, and stone sealer application for Italian marble, granites & tiles.',
-      startingPrice: 9500,
-      estimatedDuration: '6-8 Hours',
-      suitableFor: 'Italian Marble, Vitrified Tiles, Terrazzo, Granite',
-      includedFeatures: JSON.stringify([
-        'Single-disc rotary scrubbing machine treatment',
-        'Slurry extraction vacuuming',
-        'pH neutral gloss enhancing rinse',
-        'Anti-skid buffing finish',
-      ]),
-      image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=800&q=80',
-    },
   ];
 
-  for (const s of services) {
-    await prisma.service.upsert({
+  const dbServices = [];
+  for (const s of servicesData) {
+    const created = await prisma.service.upsert({
       where: { slug: s.slug },
       update: s,
       create: s,
     });
+    dbServices.push(created);
   }
 
-  // 3. Seed Stain Types
-  const stainTypes = [
-    {
-      slug: 'glue-fevicol',
-      name: 'Glue / Fevicol Residue',
-      category: 'Adhesive',
-      description: 'Hardened synthetic resin glue, carpentry adhesive, or laminate contact cement.',
-      surfaceCompatibility: JSON.stringify(['Marble', 'Tile', 'Wood', 'Glass', 'Laminate']),
-      difficultyLevel: 'High',
-      safetyNotice: 'Requires custom solvent treatment. Do not use metal razors on polished wood or laminate.',
-      sampleImage: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-      slug: 'paint-emulsion',
-      name: 'Paint & Emulsion Overspray',
-      category: 'Paint',
-      description: 'Dried acrylic paint, enamel drips, or ceiling emulsion splatters.',
-      surfaceCompatibility: JSON.stringify(['Glass', 'Tile', 'Marble', 'Metal', 'Sanitaryware']),
-      difficultyLevel: 'Moderate',
-      safetyNotice: 'Final removal success depends on paint age and porosity of the substrate.',
-      sampleImage: 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-      slug: 'cement-slurry',
-      name: 'Cement & Tile Grout Haze',
-      category: 'Construction',
-      description: 'White grout residue, thin-set mortar splashes, or dry cement film.',
-      surfaceCompatibility: JSON.stringify(['Vitrified Tile', 'Granite', 'Ceramic', 'Concrete']),
-      difficultyLevel: 'High',
-      safetyNotice: 'Acidic cleaners must never be used on acid-sensitive natural marble or limestone.',
-      sampleImage: 'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=800&q=80',
-    },
-    {
-      slug: 'silicone-sealant',
-      name: 'Silicone & Caulk Residue',
-      category: 'Sealant',
-      description: 'Excess silicone sealant around glass panes, sink counters, and shower enclosures.',
-      surfaceCompatibility: JSON.stringify(['Glass', 'Granite', 'Ceramic', 'Aluminum']),
-      difficultyLevel: 'Moderate',
-      safetyNotice: 'Requires silicone digester gel and mechanical stripping with non-marring blades.',
-      sampleImage: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80',
-    },
-  ];
-
-  for (const st of stainTypes) {
-    await prisma.stainType.upsert({
-      where: { slug: st.slug },
-      update: st,
-      create: st,
-    });
-  }
-
-  // 4. Seed Demo Users & Agencies
-  const architectUser = await prisma.user.upsert({
-    where: { email: 'architect@studioaura.com' },
+  // 3. Seed Demo Users & Agencies
+  const customerUser = await prisma.user.upsert({
+    where: { email: 'rahul.j@example.com' },
     update: {},
     create: {
-      email: 'architect@studioaura.com',
+      email: 'rahul.j@example.com',
       password: 'password123',
-      name: 'Ar. Rajesh Sharma',
-      phone: '+91 98230 11223',
-      role: 'ARCHITECT',
+      name: 'Rahul Jaykar',
+      phone: '+91 98765 43210',
+      role: 'CUSTOMER',
       customerProfile: {
         create: {
-          companyName: 'Aura Architecture & Design Studio',
-          businessType: 'Architectural Firm',
           city: 'Pune',
           state: 'Maharashtra',
           pinCode: '411045',
-          address: 'Baner High Street, Baner, Pune',
+          address: 'Flat 402, Rosewood Society, Baner, Pune',
         },
       },
     },
-    include: { customerProfile: true },
   });
 
-  const designerUser = await prisma.user.upsert({
-    where: { email: 'designer@priyainteriors.com' },
-    update: {},
-    create: {
-      email: 'designer@priyainteriors.com',
-      password: 'password123',
-      name: 'Priya Kulkarni',
-      phone: '+91 98900 44556',
-      role: 'INTERIOR_DESIGNER',
-      customerProfile: {
-        create: {
-          companyName: 'Priya Kulkarni Design Co.',
-          businessType: 'Interior Design Studio',
-          city: 'Pune',
-          state: 'Maharashtra',
-          pinCode: '411007',
-          address: 'Aundh, Pune',
-        },
-      },
-    },
-    include: { customerProfile: true },
-  });
-
-  // Agency 1: ShinePro Cleaning Services
+  // Agency 1: ShinePro Cleaning Services (Active, Nearest ~ 3.2 KM away)
   const agencyUser1 = await prisma.user.upsert({
     where: { email: 'contact@shineproclean.com' },
     update: {},
@@ -240,34 +149,41 @@ async function main() {
       password: 'password123',
       name: 'ShinePro Operations',
       phone: '+91 98221 99887',
-      role: 'CLEANING_AGENCY',
+      role: 'AGENCY_ADMIN',
       agency: {
         create: {
           name: 'ShinePro Cleaning Services',
-          tagline: 'Precision Post-Construction & Handover Specialists',
-          description: 'Verified top-tier commercial and high-end residential cleaning agency operating since 2018 with 40+ trained technicians.',
-          logoUrl: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?auto=format&fit=crop&w=200&h=200&q=80',
+          ownerName: 'Suresh Kumar',
+          partnerStatus: 'ACTIVE',
+          partnerTier: 'PREFERRED',
           verified: true,
+          active: true,
           rating: 4.9,
           reviewCount: 58,
           experienceYears: 7,
-          minOrderPrice: 3500,
-          baseHourlyRate: 650,
+          minOrderPrice: 2500,
           phone: '+91 98221 99887',
           email: 'contact@shineproclean.com',
-          address: 'Plot 42, Baner Road',
+          address: 'Plot 42, Baner Road, Baner',
           city: 'Pune',
           state: 'Maharashtra',
           pinCode: '411045',
           lat: 18.559,
           lng: 73.7868,
-          serviceRadiusKm: 30,
+          serviceRadiusKm: 25,
           serviceAreas: {
             create: [
               { city: 'Pune', areaName: 'Baner', pinCode: '411045' },
-              { city: 'Pune', areaName: 'Aundh', pinCode: '411007' },
               { city: 'Pune', areaName: 'Wakad', pinCode: '411057' },
-              { city: 'Pune', areaName: 'Hinjewadi', pinCode: '411057' },
+              { city: 'Pune', areaName: 'Aundh', pinCode: '411007' },
+            ],
+          },
+          crewMembers: {
+            create: [
+              { name: 'Suresh Kumar', phone: '+91 98221 99887', role: 'LEAD', active: true },
+              { name: 'Mahesh Patil', phone: '+91 98221 99888', role: 'CLEANER', active: true },
+              { name: 'Rahul Shinde', phone: '+91 98221 99889', role: 'CLEANER', active: true },
+              { name: 'Akash More', phone: '+91 98221 99890', role: 'CLEANER', active: true },
             ],
           },
         },
@@ -276,7 +192,23 @@ async function main() {
     include: { agency: true },
   });
 
-  // Agency 2: CleanMax Infrastructure Solutions
+  // Link services to ShinePro
+  if (agencyUser1.agency) {
+    for (const s of dbServices) {
+      await prisma.agencyService.upsert({
+        where: { id: `shinepro-${s.id}` },
+        update: { active: true },
+        create: {
+          id: `shinepro-${s.id}`,
+          agencyId: agencyUser1.agency.id,
+          serviceId: s.id,
+          active: true,
+        },
+      });
+    }
+  }
+
+  // Agency 2: CleanMax Infrastructure (Active, ~ 5.8 KM away)
   const agencyUser2 = await prisma.user.upsert({
     where: { email: 'info@cleanmaxsolutions.com' },
     update: {},
@@ -285,34 +217,38 @@ async function main() {
       password: 'password123',
       name: 'CleanMax Manager',
       phone: '+91 97654 33211',
-      role: 'CLEANING_AGENCY',
+      role: 'AGENCY_ADMIN',
       agency: {
         create: {
-          name: 'CleanMax Infrastructure Solutions',
-          tagline: 'Heavy Post-Civil & Stain Remediation Experts',
-          description: 'Specialists in heavy cement haze removal, Italian marble single-disc polishing, and glue/paint solvent treatments.',
-          logoUrl: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=200&h=200&q=80',
+          name: 'CleanMax Solutions',
+          ownerName: 'Vijay Deshmukh',
+          partnerStatus: 'ACTIVE',
+          partnerTier: 'ACTIVE',
           verified: true,
+          active: true,
           rating: 4.7,
           reviewCount: 42,
-          experienceYears: 6,
-          minOrderPrice: 4000,
-          baseHourlyRate: 550,
+          experienceYears: 5,
+          minOrderPrice: 2500,
           phone: '+91 97654 33211',
           email: 'info@cleanmaxsolutions.com',
-          address: 'Commerce Center, Viman Nagar',
+          address: 'Commerce Center, Aundh',
           city: 'Pune',
           state: 'Maharashtra',
-          pinCode: '411014',
-          lat: 18.5679,
-          lng: 73.9143,
+          pinCode: '411007',
+          lat: 18.562,
+          lng: 73.805,
           serviceRadiusKm: 25,
           serviceAreas: {
             create: [
-              { city: 'Pune', areaName: 'Viman Nagar', pinCode: '411014' },
-              { city: 'Pune', areaName: 'Kharadi', pinCode: '411014' },
-              { city: 'Pune', areaName: 'Kalyani Nagar', pinCode: '411006' },
-              { city: 'Pune', areaName: 'Hadapsar', pinCode: '411028' },
+              { city: 'Pune', areaName: 'Aundh', pinCode: '411007' },
+              { city: 'Pune', areaName: 'Baner', pinCode: '411045' },
+            ],
+          },
+          crewMembers: {
+            create: [
+              { name: 'Vijay Deshmukh', phone: '+91 97654 33211', role: 'LEAD', active: true },
+              { name: 'Karan Joshi', phone: '+91 97654 33212', role: 'CLEANER', active: true },
             ],
           },
         },
@@ -321,64 +257,22 @@ async function main() {
     include: { agency: true },
   });
 
-  // 5. Seed Demo Project
-  if (architectUser.customerProfile && agencyUser1.agency) {
-    const handoverService = await prisma.service.findUnique({ where: { slug: 'interior-handover-cleaning' } });
-    
-    const demoProject = await prisma.project.upsert({
-      where: { projectCode: 'KLZ-2026-8812' },
-      update: {},
-      create: {
-        projectCode: 'KLZ-2026-8812',
-        customerId: architectUser.customerProfile.id,
-        title: 'Aura Residence - Luxury Penthouse Handover',
-        clientName: 'Dr. Vivek Singhania',
-        stage: 'Interior Handover',
-        locationAddress: 'Flat 1401, Tower B, Pancard Club Road, Baner',
-        city: 'Pune',
-        pinCode: '411045',
-        notes: 'Client handover scheduled for 20th September. High polish marble floors and veneer wardrobes require dust-free finish.',
-      },
-    });
-
-    const demoBooking = await prisma.booking.upsert({
-      where: { bookingCode: 'KLZ-BK-9021' },
-      update: {},
-      create: {
-        bookingCode: 'KLZ-BK-9021',
-        projectId: demoProject.id,
-        customerId: architectUser.id,
-        agencyId: agencyUser1.agency.id,
-        serviceId: handoverService?.id,
-        surfaceType: 'Italian Marble & Polish Veneer',
-        status: 'IN_PROGRESS',
-        scheduledDate: '2026-09-15',
-        scheduledTime: '10:00 AM',
-        propertyType: '4 BHK Luxury Penthouse',
-        propertyAreaSqft: 3400,
-        totalAmount: 14500,
-        paymentStatus: 'PAID',
-        beforeAfterMedia: {
-          create: [
-            {
-              stage: 'BEFORE',
-              imageUrl: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80',
-              caption: 'Construction dust on marble floor and veneer cabinets prior to treatment.',
-            },
-            {
-              stage: 'AFTER',
-              imageUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
-              caption: 'Handover ready mirror polish floor finish after Kleanzo deep detail.',
-            },
-          ],
+  if (agencyUser2.agency) {
+    for (const s of dbServices) {
+      await prisma.agencyService.upsert({
+        where: { id: `cleanmax-${s.id}` },
+        update: { active: true },
+        create: {
+          id: `cleanmax-${s.id}`,
+          agencyId: agencyUser2.agency.id,
+          serviceId: s.id,
+          active: true,
         },
-      },
-    });
-
-    console.log(`Seeded Demo Project ${demoProject.projectCode} and Booking ${demoBooking.bookingCode}`);
+      });
+    }
   }
 
-  console.log('Database seeding complete successfully!');
+  console.log('Database seeding completed successfully!');
 }
 
 main()

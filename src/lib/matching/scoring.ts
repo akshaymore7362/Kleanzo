@@ -36,7 +36,7 @@ export function computeScores(
   // 1. Proximity / Distance
   const distanceKm = calculateDistanceKm(userLat, userLng, agency.lat, agency.lng);
   const radius = agency.serviceRadiusKm > 0 ? agency.serviceRadiusKm : 25;
-  let proximityScore = Math.max(10, 100 - (distanceKm / radius) * 50);
+  const proximityScore = Math.max(10, 100 - (distanceKm / radius) * 50);
 
   // 2. Service Capability score (100 if fully matching)
   const serviceCapabilityScore = 95;

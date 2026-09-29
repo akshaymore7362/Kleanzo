@@ -166,17 +166,17 @@ export function BlogSection() {
             </p>
           </div>
 
-          {/* Category Filter Pills */}
-          <div className="flex flex-wrap gap-2">
+          {/* Category Filter Pills (Responsive Scrollable) */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-none max-w-full">
             {categories.map((cat) => (
               <button
                 key={cat}
                 type="button"
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   selectedCategory === cat
-                    ? 'bg-[#E8B619] text-black shadow-md ring-2 ring-[#E8B619]'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-[#FACC15] text-black shadow-md ring-2 ring-[#FACC15]'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200/60'
                 }`}
               >
                 {cat}
@@ -185,70 +185,72 @@ export function BlogSection() {
           </div>
         </div>
 
-        {/* BORDERLESS SLEEK UNIQUE BLOG CARDS GRID */}
+        {/* ULTRA-ATTRACTIVE & RESPONSIVE BLOG CARDS GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredPosts.map((post) => (
             <div
               key={post.id}
               onClick={() => setActiveFullPost(post)}
-              className="group bg-white rounded-3xl overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col justify-between cursor-pointer transform hover:-translate-y-1.5"
+              className="group bg-white rounded-3xl p-4 sm:p-5 border border-gray-200/80 hover:border-[#FACC15] shadow-sm hover:shadow-2xl transition-all duration-300 flex flex-col justify-between cursor-pointer transform hover:-translate-y-2 relative"
             >
-              <div>
-                {/* Borderless Image Container with Gradient Fade */}
-                <div className="relative h-60 w-full overflow-hidden rounded-3xl">
+              <div className="space-y-4">
+                {/* High Quality Thumbnail Image Container */}
+                <div className="relative h-56 sm:h-60 w-full overflow-hidden rounded-2xl bg-gray-100">
                   <img
                     src={post.image}
                     alt={post.title}
-                    className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
+                    className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   
                   {/* Category Pill */}
-                  <span className="absolute top-4 left-4 bg-black/80 backdrop-blur-md text-[#E8B619] text-[10px] font-black px-3 py-1 rounded-full border border-white/20 flex items-center gap-1 shadow-md">
-                    <Tag className="w-3 h-3" /> {post.category}
+                  <span className="absolute top-3 left-3 bg-black/70 backdrop-blur-md text-[#FACC15] text-[10px] font-black px-3 py-1 rounded-full border border-white/20 flex items-center gap-1 shadow-md">
+                    <Tag className="w-3 h-3 text-[#FACC15]" /> {post.category}
                   </span>
 
                   {post.featured && (
-                    <span className="absolute top-4 right-4 bg-[#E8B619] text-black text-[10px] font-black px-3 py-1 rounded-full shadow-md animate-pulse">
+                    <span className="absolute top-3 right-3 bg-[#FACC15] text-black text-[10px] font-black px-3 py-1 rounded-full shadow-md">
                       FEATURED GUIDE
                     </span>
                   )}
 
-                  <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center text-white text-[11px] font-bold">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-[#E8B619]" /> {post.readTime}
+                  <div className="absolute bottom-3 left-3 right-3 flex justify-between items-center text-white text-[11px] font-bold">
+                    <span className="flex items-center gap-1.5 bg-black/60 px-2.5 py-1 rounded-full backdrop-blur-xs text-[#FACC15]">
+                      <Clock className="w-3.5 h-3.5" /> {post.readTime}
                     </span>
-                    <span className="flex items-center gap-1 bg-black/50 px-2.5 py-0.5 rounded-full backdrop-blur-xs">
-                      <Eye className="w-3 h-3 text-amber-300" /> {post.views} views
+                    <span className="flex items-center gap-1.5 bg-black/60 px-2.5 py-1 rounded-full backdrop-blur-xs text-gray-200">
+                      <Eye className="w-3.5 h-3.5 text-amber-300" /> {post.views}
                     </span>
                   </div>
                 </div>
 
-                {/* Content */}
-                <div className="py-5 space-y-2.5">
-                  <div className="flex items-center gap-2 text-xs text-gray-400 font-extrabold">
-                    <User className="w-3.5 h-3.5 text-[#E8B619]" />
-                    <span>{post.author}</span>
+                {/* Card Content & Metadata */}
+                <div className="space-y-2 px-1">
+                  <div className="flex items-center gap-2 text-[11px] text-gray-500 font-extrabold">
+                    <span className="flex items-center gap-1 text-black">
+                      <User className="w-3.5 h-3.5 text-[#E8B619]" />
+                      {post.author}
+                    </span>
                     <span>•</span>
                     <span>{post.date}</span>
                   </div>
 
-                  <h3 className="text-lg font-black text-[#111111] group-hover:text-[#92400E] transition-colors leading-snug line-clamp-2">
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 group-hover:text-amber-800 transition-colors leading-snug line-clamp-2">
                     {post.title}
                   </h3>
 
-                  <p className="text-xs text-gray-500 leading-relaxed line-clamp-2 font-medium">
+                  <p className="text-xs text-gray-600 leading-relaxed line-clamp-2 font-medium">
                     {post.excerpt}
                   </p>
                 </div>
               </div>
 
               {/* Action Footer */}
-              <div className="pt-2 flex items-center justify-between text-xs">
+              <div className="pt-4 mt-3 border-t border-gray-100 flex items-center justify-between text-xs px-1">
                 <span className="font-extrabold text-[#92400E] group-hover:translate-x-1.5 transition-transform flex items-center gap-1.5">
                   Read Full Article <ArrowRight className="w-4 h-4 text-[#E8B619]" />
                 </span>
-                <span className="text-gray-400 font-bold flex items-center gap-1">
+                <span className="text-gray-400 font-bold flex items-center gap-1 bg-gray-50 px-2.5 py-1 rounded-lg border border-gray-150">
                   <ThumbsUp className="w-3.5 h-3.5 text-amber-500" /> {post.likes}
                 </span>
               </div>

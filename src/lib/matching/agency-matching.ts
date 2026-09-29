@@ -41,7 +41,11 @@ export async function runAgencyMatchingEngine(
 
   // 2. Fetch agencies with service areas
   const agencies = await prisma.agency.findMany({
-    where: { verified: true, active: true },
+    where: {
+      verified: true,
+      active: true,
+      partnerStatus: { in: ['ACTIVE', 'APPROVED', 'PREFERRED', 'HIGH_VOLUME'] },
+    },
     include: {
       serviceAreas: true,
       services: {

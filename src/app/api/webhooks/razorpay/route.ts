@@ -11,16 +11,18 @@ export async function POST(req: NextRequest) {
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || 'whsec_kleanzo_secret_key_123';
 
     // 1. Verify Webhook Signature
-    if (signature) {
-      const expectedSignature = crypto
-        .createHmac('sha256', webhookSecret)
-        .update(bodyText)
-        .digest('hex');
+    if (!signature) {
+      return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
+    }
 
-      if (signature !== expectedSignature && process.env.NODE_ENV === 'production') {
-        console.error('[Razorpay Webhook] Invalid signature');
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
-      }
+    const expectedSignature = crypto
+      .createHmac('sha256', webhookSecret)
+      .update(bodyText)
+      .digest('hex');
+
+    if (signature.length !== expectedSignature.length || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
+      console.error('[Razorpay Webhook] Invalid signature');
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
 
     const payload = JSON.parse(bodyText);
@@ -74,7 +76,7 @@ export async function POST(req: NextRequest) {
             },
           });
 
-          // Transition Booking state: PENDING_PAYMENT -> CONFIRMED -> ASSIGNMENT_PENDING
+          // Verified advance payment unlocks partner assignment.
           if (paymentRecord.bookingId) {
             await tx.booking.update({
               where: { id: paymentRecord.bookingId },
@@ -87,7 +89,7 @@ export async function POST(req: NextRequest) {
             await tx.bookingStatusHistory.create({
               data: {
                 bookingId: paymentRecord.bookingId,
-                fromStatus: 'PENDING_PAYMENT',
+                fromStatus: 'BOOKING_PENDING_ADVANCE',
                 toStatus: 'ASSIGNMENT_PENDING',
                 changedBy: 'RAZORPAY_WEBHOOK',
                 changedType: 'SYSTEM',
@@ -116,8 +118,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ status: 'success' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Razorpay Webhook Error]:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Webhook processing failed' }, { status: 500 });
   }
 }

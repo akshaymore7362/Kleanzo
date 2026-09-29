@@ -23,7 +23,7 @@ export function StainDiagnosticSection() {
     <section className="py-20 bg-[#F5F8FA]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-14">
-          <span className="text-xs font-black uppercase tracking-widest text-[#E8B619] bg-black px-3.5 py-1 rounded-full">
+          <span className="text-xs font-black uppercase tracking-widest text-amber-950 bg-[#FEF08A] border border-[#FDE047] px-3.5 py-1 rounded-full shadow-xs">
             SMART STAIN REMEDIATION
           </span>
           <h2 className="text-3xl sm:text-5xl font-black text-[#111111] mt-4 tracking-tight">
@@ -74,7 +74,7 @@ export function StainDiagnosticSection() {
                     onClick={() => setSelectedSurface(surface)}
                     className={`p-3.5 rounded-2xl border text-center font-bold text-sm transition-all py-6 ${
                       selectedSurface === surface
-                        ? 'border-black bg-black text-white shadow-sm'
+                        ? 'border-[#FACC15] bg-[#FACC15] text-black font-black shadow-md ring-2 ring-[#FACC15]'
                         : 'border-gray-200 hover:border-gray-300 text-gray-700 bg-gray-50/50'
                     }`}
                   >
@@ -100,10 +100,10 @@ export function StainDiagnosticSection() {
               Selected Requirement: <span className="font-bold text-black">{selectedStain} on {selectedSurface}</span>
             </div>
             <Link
-              href={`/stain-removal?stain=${encodeURIComponent(selectedStain)}&surface=${encodeURIComponent(selectedSurface)}`}
-              className="w-full sm:w-auto bg-[#E8B619] hover:bg-[#D4A512] text-black font-extrabold px-8 py-3.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm"
+              href={`/bookings/new?stain=${encodeURIComponent(selectedStain)}&surface=${encodeURIComponent(selectedSurface)}`}
+              className="w-full sm:w-auto bg-[#E8B619] hover:bg-[#D4A512] text-black font-extrabold px-8 py-3.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wide"
             >
-              FIND STAIN SPECIALISTS <ArrowRight className="w-4 h-4" />
+              PROCEED TO BOOKING FORM (₹499 ADVANCE) <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>

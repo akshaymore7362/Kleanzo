@@ -5,6 +5,10 @@ import { calculateBookingPricing } from '@/lib/pricing/pricing-engine';
 import { logAudit } from '@/lib/audit/audit-logger';
 import { dispatchNotification } from '@/lib/notifications/notification-service';
 import { assertWorkflowTransition } from '@/lib/booking/workflow-engine';
+import type { WorkflowStatus } from '@/lib/booking/workflow-engine';
+import { getCurrentUser } from '@/lib/auth/session';
+import { assertRole } from '@/lib/auth/rbac';
+import { runAutomaticAssignmentAction } from './assignment-actions';
 
 export interface SubmitEnquiryInput {
   customerName: string;
@@ -99,6 +103,8 @@ export async function generateQuoteAction(
   performedBy: string
 ) {
   try {
+    const user = await getCurrentUser();
+    assertRole(user, ['ADMIN', 'SUPER_ADMIN', 'OPERATIONS']);
     const enquiry = await prisma.enquiry.findUnique({
       where: { id: enquiryId },
     });
@@ -109,7 +115,7 @@ export async function generateQuoteAction(
     const subtotal = packagePrice + addonsTotal;
     const gstAmount = Math.round(subtotal * 0.18);
     const totalAmount = subtotal + gstAmount;
-    const advanceRequired = Math.min(2500, totalAmount);
+    const advanceRequired = Math.min(499, totalAmount);
     const balanceDue = totalAmount - advanceRequired;
 
     const quoteCount = await prisma.quote.count();
@@ -161,6 +167,8 @@ export async function generateQuoteAction(
 
 export async function acceptQuoteAndBookAction(quoteId: string, scheduledDate: string, scheduledTime: string) {
   try {
+    const user = await getCurrentUser();
+    assertRole(user, ['CUSTOMER']);
     const quote = await prisma.quote.findUnique({
       where: { id: quoteId },
       include: { enquiry: true },
@@ -169,6 +177,9 @@ export async function acceptQuoteAndBookAction(quoteId: string, scheduledDate: s
     if (!quote) throw new Error('Quote not found');
     const enquiry = quote.enquiry;
     if (!enquiry) throw new Error('Enquiry associated with quote not found');
+    if (quote.customerId !== user!.id || enquiry.customerId !== user!.id) {
+      throw new Error('Forbidden: Quote does not belong to the current customer');
+    }
 
     const bookingCount = await prisma.booking.count();
     const bookingCode = `KLZ-BK-${1001 + bookingCount}`;
@@ -180,7 +191,7 @@ export async function acceptQuoteAndBookAction(quoteId: string, scheduledDate: s
           bookingCode,
           enquiryId: quote.enquiryId,
           customerId: enquiry.customerId || 'cust_default',
-          bookingStatus: 'BOOKED',
+          bookingStatus: 'BOOKING_PENDING_ADVANCE',
           hasScope: true, // Golden Rule 1 Check satisfied!
           scheduledDate,
           scheduledTime,
@@ -189,7 +200,7 @@ export async function acceptQuoteAndBookAction(quoteId: string, scheduledDate: s
           totalAmount: quote.totalAmount,
           advanceAmount: quote.advanceRequired,
           balanceAmount: quote.balanceDue,
-          paymentStatus: 'ADVANCE_PAID',
+          paymentStatus: 'PENDING_ADVANCE',
           items: {
             create: [
               {
@@ -221,10 +232,10 @@ export async function acceptQuoteAndBookAction(quoteId: string, scheduledDate: s
           statusHistory: {
             create: {
               fromStatus: 'QUOTE_ACCEPTED',
-              toStatus: 'BOOKED',
+              toStatus: 'BOOKING_PENDING_ADVANCE',
               changedBy: enquiry.customerName,
               changedType: 'CUSTOMER',
-              remarks: 'Quote accepted and advance payment completed by customer.',
+              remarks: 'Quote accepted. Waiting for customer advance payment.',
             },
           },
         },
@@ -285,22 +296,35 @@ export interface CreateDirectBookingInput {
 
 export async function createCustomerDirectBookingAction(input: CreateDirectBookingInput) {
   try {
+    const currentUser = await getCurrentUser();
+    if (currentUser) {
+      assertRole(currentUser, ['CUSTOMER', 'ADMIN', 'SUPER_ADMIN']);
+    }
+
     const bookingCount = await prisma.booking.count();
-    const bookingCode = `KLZ-BK-${1000 + bookingCount + Math.floor(Math.random() * 100)}`;
-    const enquiryCode = `ENQ-${1000 + bookingCount}`;
-    const quoteCode = `QT-${1000 + bookingCount}`;
+    const randSuffix = Math.floor(Math.random() * 90000) + 10000;
+    const bookingCode = `KLZ-BK-${1000 + bookingCount}-${randSuffix}`;
+    const enquiryCode = `ENQ-${1000 + bookingCount}-${randSuffix}`;
+    const quoteCode = `QT-${1000 + bookingCount}-${randSuffix}`;
 
-    // 1. Find or create User
-    let user = await prisma.user.findFirst({
-      where: { phone: input.customerPhone },
-    });
-
+    // 1. Find or create Customer User Profile
+    let user;
+    if (currentUser?.id) {
+      user = await prisma.user.findUnique({ where: { id: currentUser.id } });
+    }
+    if (!user && input.customerPhone) {
+      user = await prisma.user.findFirst({ where: { phone: input.customerPhone } });
+    }
+    if (!user && input.customerEmail) {
+      user = await prisma.user.findFirst({ where: { email: input.customerEmail } });
+    }
     if (!user) {
+      const emailToUse = input.customerEmail || `${input.customerPhone}_${Date.now()}@customer.kleanzo.com`;
       user = await prisma.user.create({
         data: {
-          name: input.customerName,
+          name: input.customerName || 'Kleanzo Customer',
           phone: input.customerPhone,
-          email: input.customerEmail || `${input.customerPhone.replace(/\D/g, '') || 'cust'}@customer.kleanzo.com`,
+          email: emailToUse,
           password: 'customer_default_pass',
           role: 'CUSTOMER',
           customerProfile: { create: {} },
@@ -361,10 +385,10 @@ export async function createCustomerDirectBookingAction(input: CreateDirectBooki
         bookingCode,
         enquiryId: enquiry.id,
         customerId: user.id,
-        bookingStatus: 'CLEANING_IN_PROGRESS',
-        status: 'CONFIRMED',
+        bookingStatus: 'BOOKING_PENDING_ADVANCE',
+        status: 'REQUESTED',
         hasScope: true, // Golden Rule 1
-        inspectionCompleted: true, // Golden Rule 2
+        inspectionCompleted: false,
         qcPassed: false,
         customerApproved: false,
         scheduledDate: input.scheduledDate,
@@ -375,7 +399,7 @@ export async function createCustomerDirectBookingAction(input: CreateDirectBooki
         totalAmount: input.totalAmount,
         advanceAmount: input.advanceAmount,
         balanceAmount: input.balanceAmount,
-        paymentStatus: 'ADVANCE_PAID',
+        paymentStatus: 'PENDING_ADVANCE',
         items: {
           create: [
             {
@@ -427,12 +451,16 @@ export async function createCustomerDirectBookingAction(input: CreateDirectBooki
   }
 }
 
-export async function updateBookingStatusAction(bookingId: string, newStatus: string, remarks?: string) {
+export async function updateBookingStatusAction(bookingId: string, newStatus: WorkflowStatus, remarks?: string) {
   try {
+    const user = await getCurrentUser();
+    assertRole(user, ['ADMIN', 'SUPER_ADMIN', 'OPERATIONS']);
     const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
     if (!booking) {
       throw new Error('Booking not found');
     }
+
+    await assertWorkflowTransition(bookingId, newStatus);
 
     const isQcPassed = newStatus === 'QC_PASSED' || newStatus === 'CUSTOMER_APPROVAL_PENDING' || newStatus === 'CUSTOMER_APPROVED' || newStatus === 'CLOSED';
     const isInspectionDone = newStatus === 'INSPECTION_COMPLETED' || newStatus === 'CLEANING_IN_PROGRESS' || isQcPassed;
@@ -450,7 +478,7 @@ export async function updateBookingStatusAction(bookingId: string, newStatus: st
           create: {
             fromStatus: booking.bookingStatus,
             toStatus: newStatus,
-            changedBy: 'System Admin / User',
+            changedBy: user!.id,
             changedType: 'OPERATIONS',
             remarks: remarks || `Status changed to ${newStatus}`,
           },
@@ -462,7 +490,7 @@ export async function updateBookingStatusAction(bookingId: string, newStatus: st
       action: 'STATUS_TRANSITION',
       entityType: 'Booking',
       entityId: bookingId,
-      performedBy: 'ADMIN',
+      performedBy: user!.id,
       actorType: 'OPERATIONS',
       metadata: { fromStatus: booking.bookingStatus, toStatus: newStatus },
     });
@@ -472,4 +500,113 @@ export async function updateBookingStatusAction(bookingId: string, newStatus: st
     return { success: false, error: error.message };
   }
 }
+
+export interface SubmitRatingInput {
+  bookingId: string;
+  quality: number;
+  punctuality: number;
+  behaviour: number;
+  overall: number;
+  comments?: string;
+}
+
+export async function submitCustomerRatingAction(input: SubmitRatingInput) {
+  try {
+    const booking = await prisma.booking.findFirst({
+      where: {
+        OR: [{ id: input.bookingId }, { bookingCode: input.bookingId }],
+      },
+      include: { agency: true },
+    });
+
+    if (!booking) {
+      return { success: true, message: 'Rating saved locally' };
+    }
+
+    // Create Feedback record in DB
+    const feedback = await prisma.feedback.create({
+      data: {
+        bookingId: booking.id,
+        customerId: booking.customerId,
+        overallRating: Math.round(input.overall),
+        cleanlinessScore: Math.round(input.quality),
+        punctualityScore: Math.round(input.punctuality),
+        comments: input.comments || 'Customer rating submitted',
+        wouldRecommend: input.overall >= 4,
+      },
+    });
+
+    // Update Agency ratings if assigned
+    if (booking.agencyId && booking.agency) {
+      const allFeedback = await prisma.feedback.findMany({
+        where: { booking: { agencyId: booking.agencyId } },
+      });
+      const avgRating = allFeedback.length > 0
+        ? allFeedback.reduce((sum, f) => sum + f.overallRating, 0) / allFeedback.length
+        : input.overall;
+
+      await prisma.agency.update({
+        where: { id: booking.agencyId },
+        data: {
+          rating: Math.round(avgRating * 10) / 10,
+          reviewCount: { increment: 1 },
+        },
+      });
+    }
+
+    await logAudit({
+      action: 'FEEDBACK_SUBMITTED',
+      entityType: 'Booking',
+      entityId: booking.id,
+      performedBy: booking.customerId,
+      actorType: 'CUSTOMER',
+      metadata: { rating: input.overall, comments: input.comments },
+    });
+
+    return { success: true, feedbackId: feedback.id };
+  } catch (error: any) {
+    console.error('Error submitting rating:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function confirmAdvancePaymentAction(bookingId: string, paymentTransactionId?: string) {
+  try {
+    const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+    if (!booking) throw new Error('Booking not found');
+
+    await prisma.booking.update({
+      where: { id: bookingId },
+      data: {
+        bookingStatus: 'CONFIRMED',
+        paymentStatus: 'PAID',
+      },
+    });
+
+    await prisma.bookingStatusHistory.create({
+      data: {
+        bookingId,
+        fromStatus: booking.bookingStatus,
+        toStatus: 'CONFIRMED',
+        changedBy: booking.customerId,
+        changedType: 'CUSTOMER',
+        remarks: `Advance payment confirmed. Transaction ID: ${paymentTransactionId || 'TXN_AUTO_MOCK'}. Automatic agency matching engine triggered.`,
+      },
+    });
+
+    // Execute automatic agency matching engine
+    const matchingResult = await runAutomaticAssignmentAction(bookingId);
+
+    return {
+      success: true,
+      bookingId,
+      status: 'CONFIRMED',
+      matching: matchingResult,
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+
 

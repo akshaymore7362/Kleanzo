@@ -5,9 +5,9 @@ export type WorkflowStatus =
   | 'QUOTE_CREATED'
   | 'QUOTE_ACCEPTED'
   | 'BOOKING_PENDING_ADVANCE'
-  | 'BOOKED'
-  | 'CONFIRMED'
-  | 'TEAM_ASSIGNED'
+  | 'ASSIGNMENT_PENDING'
+  | 'PARTNER_PENDING_ACCEPTANCE'
+  | 'PARTNER_ACCEPTED'
   | 'INSPECTION_PENDING'
   | 'INSPECTION_COMPLETED'
   | 'CLEANING_IN_PROGRESS'
@@ -24,6 +24,32 @@ export type WorkflowStatus =
   | 'INVOICE_ISSUED'
   | 'CLOSED'
   | 'CANCELLED';
+
+export const WORKFLOW_TRANSITIONS: Record<WorkflowStatus, readonly WorkflowStatus[]> = {
+  ENQUIRY_RECEIVED: ['QUOTE_CREATED', 'CANCELLED'],
+  QUOTE_CREATED: ['QUOTE_ACCEPTED', 'CANCELLED'],
+  QUOTE_ACCEPTED: ['BOOKING_PENDING_ADVANCE', 'CANCELLED'],
+  BOOKING_PENDING_ADVANCE: ['ASSIGNMENT_PENDING', 'CANCELLED'],
+  ASSIGNMENT_PENDING: ['PARTNER_PENDING_ACCEPTANCE', 'CANCELLED'],
+  PARTNER_PENDING_ACCEPTANCE: ['PARTNER_ACCEPTED', 'ASSIGNMENT_PENDING', 'CANCELLED'],
+  PARTNER_ACCEPTED: ['INSPECTION_PENDING', 'CANCELLED'],
+  INSPECTION_PENDING: ['INSPECTION_COMPLETED', 'CANCELLED'],
+  INSPECTION_COMPLETED: ['CLEANING_IN_PROGRESS', 'CANCELLED'],
+  CLEANING_IN_PROGRESS: ['CLEANING_COMPLETED', 'CANCELLED'],
+  CLEANING_COMPLETED: ['QC_PENDING', 'QC_PASSED', 'CANCELLED'],
+  QC_PENDING: ['QC_PASSED', 'CORRECTION_REQUIRED', 'CANCELLED'],
+  QC_PASSED: ['CUSTOMER_APPROVAL_PENDING', 'CANCELLED'],
+  CUSTOMER_APPROVAL_PENDING: ['CUSTOMER_APPROVED', 'CUSTOMER_ISSUE_RAISED'],
+  CUSTOMER_APPROVED: ['BALANCE_PAYMENT_PENDING', 'PAYMENT_COMPLETED', 'CLOSED'],
+  CUSTOMER_ISSUE_RAISED: ['CORRECTION_REQUIRED', 'CANCELLED'],
+  CORRECTION_REQUIRED: ['CORRECTION_COMPLETED', 'CANCELLED'],
+  CORRECTION_COMPLETED: ['QC_PENDING', 'QC_PASSED'],
+  BALANCE_PAYMENT_PENDING: ['PAYMENT_COMPLETED', 'CLOSED'],
+  PAYMENT_COMPLETED: ['INVOICE_ISSUED', 'CLOSED'],
+  INVOICE_ISSUED: ['CLOSED'],
+  CLOSED: [],
+  CANCELLED: [],
+};
 
 /**
  * GOLDEN RULE 1: NO SCOPE = NO BOOKING
@@ -109,8 +135,19 @@ export async function assertWorkflowTransition(
   bookingId: string,
   targetStatus: WorkflowStatus
 ): Promise<void> {
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking) {
+    throw new Error('Booking not found');
+  }
+
+  const currentStatus = booking.bookingStatus as WorkflowStatus;
+  const allowedTargets = WORKFLOW_TRANSITIONS[currentStatus];
+  if (!allowedTargets || !allowedTargets.includes(targetStatus)) {
+    throw new Error(`Invalid workflow transition: ${currentStatus} -> ${targetStatus}`);
+  }
+
   // Check Golden Rule 1 before confirming booking
-  if (['BOOKED', 'CONFIRMED', 'TEAM_ASSIGNED'].includes(targetStatus)) {
+  if (['ASSIGNMENT_PENDING'].includes(targetStatus)) {
     await validateScopeBeforeBooking(bookingId);
   }
 

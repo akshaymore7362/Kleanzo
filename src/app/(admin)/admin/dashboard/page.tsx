@@ -47,13 +47,14 @@ import {
 import { logoutAction } from '@/actions/auth-actions';
 import { getAdminRealDataAction, togglePartnerStatusAction, reassignJobPartnerAction } from '@/actions/admin-actions';
 import { updateBookingStatusAction } from '@/actions/booking-actions';
+import type { WorkflowStatus } from '@/lib/booking/workflow-engine';
 
 export default function OperationsAdminDashboard() {
   const [activeSidebarItem, setActiveSidebarItem] = useState('Dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [modalType, setModalType] = useState<string | null>(null);
   const [selectedBookingModal, setSelectedBookingModal] = useState<any | null>(null);
-  const [newStatusSelection, setNewStatusSelection] = useState<string>('CLEANING_IN_PROGRESS');
+  const [newStatusSelection, setNewStatusSelection] = useState<WorkflowStatus>('CLEANING_IN_PROGRESS');
   const [selectedPartnerSelection, setSelectedPartnerSelection] = useState<string>('CleanPro Services');
   const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -582,7 +583,7 @@ export default function OperationsAdminDashboard() {
                         <button
                           onClick={() => {
                             setSelectedBookingModal(row);
-                            setNewStatusSelection(row.bookingStatusRaw || 'CLEANING_IN_PROGRESS');
+                            setNewStatusSelection((row.bookingStatusRaw || 'CLEANING_IN_PROGRESS') as WorkflowStatus);
                           }}
                           className="px-4 py-2 bg-[#E8B619] hover:bg-[#D4A512] text-black font-black text-xs rounded-xl shadow-xs transition-all uppercase cursor-pointer"
                         >
@@ -675,7 +676,7 @@ export default function OperationsAdminDashboard() {
                 </label>
                 <select
                   value={newStatusSelection}
-                  onChange={(e) => setNewStatusSelection(e.target.value)}
+                  onChange={(e) => setNewStatusSelection(e.target.value as WorkflowStatus)}
                   className="w-full p-3.5 bg-gray-50 border border-gray-300 rounded-xl font-extrabold text-xs focus:outline-none focus:border-[#E8B619]"
                 >
                   <option value="TEAM_ALLOCATED">Step 4: Partner Team Allocated</option>

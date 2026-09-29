@@ -1,6 +1,8 @@
 'use server';
 
 import { prisma } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth/session';
+import { assertRole } from '@/lib/auth/rbac';
 import { logAudit } from '@/lib/audit/audit-logger';
 import { dispatchNotification } from '@/lib/notifications/notification-service';
 import { assertWorkflowTransition } from '@/lib/booking/workflow-engine';
@@ -8,14 +10,19 @@ import { createSettlementRecord } from '@/lib/settlements/settlement-engine';
 
 export async function approveCustomerHandoverAction(bookingId: string, customerId: string) {
   try {
-    // ENFORCE GOLDEN RULE 3: NO QC = NO HANDOVER
-    await assertWorkflowTransition(bookingId, 'CUSTOMER_APPROVAL_PENDING');
+    const user = await getCurrentUser();
+    assertRole(user, ['CUSTOMER']);
 
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
     });
-
     if (!booking) throw new Error('Booking not found');
+    if (booking.customerId !== user!.id || customerId !== user!.id) {
+      throw new Error('Forbidden: Booking does not belong to the current customer');
+    }
+
+    // ENFORCE GOLDEN RULE 3: NO QC = NO HANDOVER
+    await assertWorkflowTransition(bookingId, 'CUSTOMER_APPROVAL_PENDING');
 
     const result = await prisma.$transaction(async (tx) => {
       // Mark customerApproved = true (Golden Rule 4 Satisfied!)
@@ -57,6 +64,9 @@ export async function approveCustomerHandoverAction(bookingId: string, customerI
 
 export async function processBalancePaymentAndCloseAction(bookingId: string, performedBy: string) {
   try {
+    const user = await getCurrentUser();
+    assertRole(user, ['CUSTOMER', 'ADMIN', 'SUPER_ADMIN', 'OPERATIONS', 'FINANCE']);
+
     // ENFORCE GOLDEN RULE 4: NO APPROVAL = NO CLOSURE
     await assertWorkflowTransition(bookingId, 'BALANCE_PAYMENT_PENDING');
 
@@ -66,6 +76,11 @@ export async function processBalancePaymentAndCloseAction(bookingId: string, per
     });
 
     if (!booking) throw new Error('Booking not found');
+    const isOperationsUser = ['ADMIN', 'SUPER_ADMIN', 'OPERATIONS', 'FINANCE'].includes(user!.role);
+    if (!isOperationsUser && booking.customerId !== user!.id) {
+      throw new Error('Forbidden: Booking does not belong to the current customer');
+    }
+    const actorId = user!.id;
 
     const invoiceNumber = `INV-2026-${1001 + Math.floor(Math.random() * 8999)}`;
 
@@ -98,7 +113,7 @@ export async function processBalancePaymentAndCloseAction(bookingId: string, per
           bookingId,
           fromStatus: 'CUSTOMER_APPROVED',
           toStatus: 'CLOSED',
-          changedBy: performedBy,
+              changedBy: actorId,
           changedType: 'OPERATIONS',
           remarks: `Balance payment of ₹${booking.balanceAmount} collected. Invoice #${invoiceNumber} issued. Booking CLOSED.`,
         },
@@ -108,7 +123,7 @@ export async function processBalancePaymentAndCloseAction(bookingId: string, per
         action: 'PAYMENT_COMPLETED',
         entityType: 'Invoice',
         entityId: invoice.id,
-        performedBy,
+        performedBy: actorId,
         actorType: 'OPERATIONS',
         metadata: { invoiceNumber, totalAmount: booking.totalAmount },
       });
@@ -150,6 +165,13 @@ export async function submitCustomerFeedbackAction(
   wouldRecommend: boolean = true
 ) {
   try {
+    const user = await getCurrentUser();
+    assertRole(user, ['CUSTOMER']);
+    const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+    if (!booking || booking.customerId !== user!.id || customerId !== user!.id) {
+      throw new Error('Forbidden: Booking does not belong to the current customer');
+    }
+
     const feedback = await prisma.feedback.create({
       data: {
         bookingId,

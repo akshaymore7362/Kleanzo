@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ShieldCheck, Building2, MapPin, CheckCircle2, Award, PhoneCall } from 'lucide-react';
+import { BlogSection } from '@/components/home/BlogSection';
 
 export const metadata = {
   title: 'About Kleanzo | Professional Cleaning Infrastructure',
@@ -59,6 +60,9 @@ export default function AboutPage() {
         </div>
 
       </div>
+
+      {/* Expert Cleaning Guides & Blog Section */}
+      <BlogSection />
     </div>
   );
 }

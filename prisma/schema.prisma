@@ -39,6 +39,19 @@ model User {
   reworkRequests  ReworkRequest[]
   notifications   Notification[]
   auditLogs       AuditLog[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model CustomerProfile {
@@ -149,7 +162,8 @@ model Agency {
   active                Boolean                 @default(true)
   
   // Partner Onboarding & Classification (Section 14 & 37)
-  partnerStatus         String                  @default("ACTIVE") // PARTNER_APPLIED, DOCUMENTS_PENDING, UNDER_REVIEW, APPROVED, ACTIVE, WARNING, SUSPENDED, REMOVED
+  applicationCode       String?                 @unique // e.g. KZ-PARTNER-9021
+  partnerStatus         String                  @default("ACTIVE") // DRAFT, PENDING_ONBOARDING, SUBMITTED, UNDER_REVIEW, ACTION_REQUIRED, APPROVED, REJECTED, ACTIVE, SUSPENDED
   partnerTier           String                  @default("PREFERRED") // ACTIVE, PREFERRED, HIGH_VOLUME
   cleaningQualityRating Float                   @default(4.8)
   onTimeRate            Float                   @default(98.5)
@@ -173,6 +187,44 @@ model Agency {
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
 
+  // Partner Onboarding (Onboarding Wizard)
+  whatsappNumber        String?
+  website               String?
+  ownerPhotoUrl         String?
+  mobileVerified        Boolean                 @default(false)
+  mobileVerifiedAt      DateTime?
+  aadhaarNumber         String?                 // Masked storage recommended
+  panNumber             String?
+  hasGst                Boolean                 @default(false)
+  gstNumber             String?
+  businessRegNumber     String?
+  teamsCount            Int?
+  cleanerCount          Int?
+  supervisorCount       Int?                    @default(1)
+  maxJobsPerDay         Int?                    @default(5)
+  equipmentList         String?                 // JSON array string
+  transportationAvailable Boolean               @default(true)
+  operationalExperienceYears Int?               @default(3)
+  officeAddress         String?                 // Optional, separate from operating address
+  bankAccountHolder     String?
+  bankName              String?
+  bankAccountNumber     String?                 // Should be stored encrypted in production
+  bankIfscCode          String?
+  agreementAccepted     Boolean                 @default(false)
+  agreementAcceptedAt   DateTime?
+  agreementVersion      String?                 @default("v1.2")
+  onboardingStep        Int                     @default(1) // 1-7, tracks wizard progress
+  submittedAt           DateTime?
+  approvedAt            DateTime?
+  approvedBy            String?
+  rejectedAt            DateTime?
+  rejectedBy            String?
+  rejectionReason       String?
+  actionRequiredSections String?                // JSON string of step IDs needing correction
+  adminRemarks          String?
+  staffBehaviourRating  Float                   @default(4.8)
+  complaintRate         Float                   @default(0.5)
+
   agencyUsers           AgencyUser[]
   serviceAreas          AgencyServiceArea[]
   services              AgencyService[]
@@ -190,16 +242,22 @@ model Agency {
   reviews               Review[]
   settlements           Settlement[]
   partnerPayouts        PartnerPayout[]
+  additionalWorkRequests AdditionalWorkRequest[]
 }
 
 model PartnerDocument {
-  id           String   @id @default(uuid())
+  id           String    @id @default(uuid())
   agencyId     String
-  agency       Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
-  documentType String   // GST_CERTIFICATE, PAN_CARD, BANK_PASSBOOK, BUSINESS_AGREEMENT
+  agency       Agency    @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  documentType String    // GST_CERTIFICATE, PAN_CARD, AADHAAR_CARD, BANK_PASSBOOK, BUSINESS_AGREEMENT, BUSINESS_REGISTRATION
+  documentNumber String?
   documentUrl  String
-  status       String   @default("VERIFIED") // PENDING, VERIFIED, REJECTED
-  uploadedAt   DateTime @default(now())
+  status       String    @default("PENDING") // PENDING, UNDER_REVIEW, VERIFIED, REJECTED, REUPLOAD_REQUIRED
+  rejectionReason String?
+  adminRemarks String?
+  uploadedAt   DateTime  @default(now())
+  verifiedAt   DateTime?
+  verifiedBy   String?
 }
 
 model AgencyUser {
@@ -374,6 +432,28 @@ model Booking {
   propertyType    String                 @default("Residential Apartment")
   propertyAreaSqft Int                   @default(1200)
   reworkReason    String?
+  
+  // Matching & Fulfillment Tracking
+  assignmentMode       String?           @default("AUTOMATIC") // AUTOMATIC, ADMIN
+  assignedAgencyId     String?
+  assignedAt           DateTime?
+  assignedBy           String?
+  assignmentReason     String?
+  agencyResponseStatus String?           @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  agencyRespondedAt    DateTime?
+  agencyRejectionReason String?
+  teamId               String?
+  onTheWayAt           DateTime?
+  arrivedAt            DateTime?
+  workStartedAt        DateTime?
+  workCompletedAt      DateTime?
+  completionProof      String?
+  completionNotes      String?
+  verificationStatus   String?           @default("NONE") // NONE, PENDING, APPROVED, CORRECTION_REQUIRED
+  verifiedBy           String?
+  verifiedAt           DateTime?
+  correctionNotes      String?
+  
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
 
@@ -398,6 +478,7 @@ model Booking {
   statusHistory   BookingStatusHistory[]
   settlementItems SettlementItem[]
   partnerPayouts  PartnerPayout[]
+  additionalWorkRequests AdditionalWorkRequest[]
 }
 
 model Job {
@@ -629,6 +710,8 @@ model Assignment {
   agencyId          String
   agency            Agency            @relation(fields: [agencyId], references: [id])
   assignedBy        String
+  assignmentMode    String?           @default("AUTOMATIC") // AUTOMATIC, ADMIN
+  assignmentReason  String?
   status            String            @default("OFFER_SENT")
   offerExpiresAt    DateTime
   acceptedAt        DateTime?
@@ -638,6 +721,24 @@ model Assignment {
 
   offers            AssignmentOffer[]
   rejections        AssignmentRejection[]
+}
+
+model AdditionalWorkRequest {
+  id              String   @id @default(uuid())
+  bookingId       String
+  booking         Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  agencyId        String
+  agency          Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  reason          String
+  description     String
+  photos          String?  // JSON array string
+  requestedAmount Float
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED, CUSTOMER_PENDING, PAID, COMPLETED
+  adminNotes      String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model AssignmentOffer {
