@@ -374,8 +374,8 @@ export default function CustomerBookingWizard() {
   const subtotal = selectedMainService.price;
   const gstAmount = Math.round(subtotal * 0.18);
   const totalCustomerPrice = subtotal + gstAmount;
-  const advanceRequired = 2000; // Fixed advance e.g. ₹2,000 as specified in prompt
-  const balancePayable = totalCustomerPrice - advanceRequired;
+  const advanceRequired = Math.min(499, totalCustomerPrice); // Fixed booking deposit ₹499
+  const balancePayable = Math.max(0, totalCustomerPrice - advanceRequired);
 
   const handleConfirmAdvancePayment = async () => {
     setSubmitting(true);
