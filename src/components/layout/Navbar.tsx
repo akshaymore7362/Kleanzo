@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Search, ChevronDown, Menu, X, Sparkles, User, Shield, Building2, LogIn, UserPlus, LogOut, RefreshCw } from 'lucide-react';
-import { logoutAction, instantModuleLoginAction } from '@/actions/auth-actions';
+import { logoutAction, instantModuleLoginAction, getCurrentUserAction } from '@/actions/auth-actions';
 
 interface UserSessionInfo {
   name: string;
@@ -15,6 +15,7 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
   const [userSession, setUserSession] = useState<UserSessionInfo | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleInstantPortalClick = async (role: 'ADMIN' | 'AGENCY_ADMIN' | 'CUSTOMER') => {
@@ -22,33 +23,35 @@ export function Navbar() {
     setMobileMenuOpen(false);
     const res = await instantModuleLoginAction(role);
     if (res.success && res.redirectUrl) {
-      window.location.href = res.redirectUrl;
+      window.location.replace(res.redirectUrl);
     }
   };
 
   useEffect(() => {
-    // Parse kleanzo_session cookie client-side to detect logged-in user
-    try {
-      const cookieStr = document.cookie;
-      const match = cookieStr.split('; ').find(row => row.startsWith('kleanzo_session='));
-      if (match) {
-        const token = match.split('=')[1];
-        if (token && token.includes('.')) {
-          const payloadBase64 = token.split('.')[0].replace(/-/g, '+').replace(/_/g, '/');
-          const jsonStr = atob(payloadBase64);
-          const payload = JSON.parse(jsonStr);
-          if (payload && payload.name && payload.role) {
-            setUserSession({
-              name: payload.name,
-              email: payload.email,
-              role: payload.role,
-            });
-          }
+    let isMounted = true;
+    getCurrentUserAction()
+      .then((user) => {
+        if (!isMounted) return;
+        if (user) {
+          setUserSession({
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          });
+        } else {
+          setUserSession(null);
         }
-      }
-    } catch {
-      setUserSession(null);
-    }
+      })
+      .catch(() => {
+        if (isMounted) setUserSession(null);
+      })
+      .finally(() => {
+        if (isMounted) setAuthLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -65,8 +68,15 @@ export function Navbar() {
 
   const handleLogout = async () => {
     setAccountDropdownOpen(false);
+    setMobileMenuOpen(false);
+    setUserSession(null);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('kleanzo_real_bookings');
+      localStorage.removeItem('kleanzo_user_cache');
+      sessionStorage.clear();
+    }
     await logoutAction();
-    window.location.href = '/login?switch=true';
+    window.location.replace('/login?switch=true');
   };
 
   const getRoleLabel = (role: string) => {
@@ -222,6 +232,15 @@ export function Navbar() {
                     <div className="px-3 py-2 border-b border-gray-100">
                       <p className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Select Portal / Sign In</p>
                     </div>
+
+                    <Link
+                      href="/login"
+                      onClick={() => setAccountDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2.5 bg-amber-50 hover:bg-amber-100 text-slate-900 font-black text-xs rounded-xl border border-amber-200 transition-colors"
+                    >
+                      <LogIn className="w-4 h-4 text-[#E8B619]" />
+                      Sign In with Credentials / Account
+                    </Link>
 
                     <button
                       onClick={() => handleInstantPortalClick('CUSTOMER')}

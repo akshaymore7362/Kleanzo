@@ -1,7 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/db';
-import { hashPassword, verifyPassword, createSessionToken, setSessionCookie, clearSessionCookie } from '@/lib/auth/session';
+import { hashPassword, verifyPassword, createSessionToken, setSessionCookie, clearSessionCookie, getCurrentUser } from '@/lib/auth/session';
 import { Role } from '@/lib/auth/rbac';
 import { logAudit } from '@/lib/audit/audit-logger';
 import crypto from 'crypto';
@@ -338,4 +338,21 @@ export async function resetPasswordAction(token: string, newPassword: string) {
 export async function logoutAction() {
   await clearSessionCookie();
   return { success: true, redirectUrl: '/login' };
+}
+
+export async function getCurrentUserAction() {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return null;
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      agencyId: user.agencyId,
+      customerId: user.customerId,
+    };
+  } catch {
+    return null;
+  }
 }
