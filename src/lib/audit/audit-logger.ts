@@ -30,7 +30,8 @@ export type AuditAction =
   | 'TEAM_ASSIGNED'
   | 'COMPLETION_SUBMITTED'
   | 'ADDITIONAL_WORK_REQUESTED'
-  | 'ADMIN_MANUAL_ASSIGNMENT';
+  | 'ADMIN_MANUAL_ASSIGNMENT'
+  | 'ADMIN_REASSIGNMENT';
 
 export interface LogAuditParams {
   action: AuditAction;

@@ -40,42 +40,42 @@ export default function AgencyJobsClientView({ bookings }: AgencyJobsClientViewP
   });
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans p-6 sm:p-10 space-y-8">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans p-6 sm:p-10 space-y-8">
       
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-neutral-900 border border-neutral-800 p-6 rounded-2xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-gray-200 p-6 rounded-3xl shadow-sm">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <Building className="w-6 h-6 text-yellow-500" /> Agency Fulfillment Jobs Portal
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <Building className="w-6 h-6 text-amber-600" /> Agency Fulfillment Jobs Portal
           </h1>
-          <p className="text-xs text-neutral-400 mt-1">
+          <p className="text-xs text-slate-500 font-semibold mt-1">
             Manage assigned Kleanzo jobs, team allocations, job day status, and completion proof submissions.
           </p>
         </div>
 
         <Link
           href="/agency/dashboard"
-          className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-yellow-400 border border-yellow-500/30 rounded-xl text-xs font-semibold transition"
+          className="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 rounded-xl text-xs font-black transition-all shadow-xs"
         >
           Agency Dashboard
         </Link>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-neutral-800">
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-gray-200">
         {filterTabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
               activeTab === tab.key
-                ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/20'
-                : 'bg-neutral-900 text-neutral-400 border border-neutral-800 hover:text-white'
+                ? 'bg-[#FACC15] text-black shadow-md border border-amber-400'
+                : 'bg-white text-slate-700 border border-gray-200 hover:bg-gray-50'
             }`}
           >
             {tab.label}
             <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${
-              activeTab === tab.key ? 'bg-black/20 text-black' : 'bg-neutral-800 text-neutral-400'
+              activeTab === tab.key ? 'bg-black/10 text-black font-extrabold' : 'bg-gray-100 text-slate-600'
             }`}>
               {tab.count}
             </span>
@@ -86,7 +86,7 @@ export default function AgencyJobsClientView({ bookings }: AgencyJobsClientViewP
       {/* Jobs Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredBookings.length === 0 ? (
-          <div className="col-span-full p-12 bg-neutral-900 border border-neutral-800 rounded-2xl text-center text-xs text-neutral-500">
+          <div className="col-span-full p-12 bg-white border border-gray-200 rounded-3xl text-center text-xs text-slate-400 font-medium">
             No jobs found matching active filter.
           </div>
         ) : (
@@ -99,36 +99,36 @@ export default function AgencyJobsClientView({ bookings }: AgencyJobsClientViewP
             return (
               <div 
                 key={b.id} 
-                className={`bg-neutral-900 border rounded-2xl p-6 flex flex-col justify-between space-y-4 transition ${
-                  isOffer ? 'border-yellow-500/60 shadow-lg shadow-yellow-500/10' : 'border-neutral-800 hover:border-neutral-700'
+                className={`bg-white border rounded-3xl p-6 flex flex-col justify-between space-y-4 transition-all shadow-sm ${
+                  isOffer ? 'border-amber-400 shadow-md ring-2 ring-amber-200' : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-bold text-yellow-400">
+                    <span className="font-mono text-xs font-black text-amber-900 bg-amber-100 border border-amber-200 px-2.5 py-1 rounded-full uppercase">
                       #{b.bookingCode}
                     </span>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
-                      isOffer ? 'bg-yellow-500/20 text-yellow-400 animate-pulse' : 'bg-neutral-800 text-neutral-300'
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                      isOffer ? 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse' : 'bg-gray-100 text-slate-700'
                     }`}>
                       {b.bookingStatus.replace(/_/g, ' ')}
                     </span>
                   </div>
 
-                  <h3 className="text-base font-bold text-white mt-2">{item?.serviceName || 'Deep Cleaning'}</h3>
-                  <div className="text-xs text-neutral-400 mt-1 flex items-center gap-1">
-                    <Building className="w-3.5 h-3.5 text-neutral-500" /> {b.propertyType}
+                  <h3 className="text-base font-black text-slate-900 mt-3">{item?.serviceName || 'Deep Cleaning'}</h3>
+                  <div className="text-xs text-slate-500 font-semibold mt-1 flex items-center gap-1">
+                    <Building className="w-3.5 h-3.5 text-slate-400" /> {b.propertyType}
                   </div>
 
-                  <div className="mt-4 p-3 bg-neutral-950 rounded-xl border border-neutral-800/80 space-y-1.5 text-xs">
-                    <div className="flex items-center gap-1.5 text-neutral-300">
-                      <MapPin className="w-3.5 h-3.5 text-yellow-500" /> Locality: {address?.areaName || address?.city || 'Pune'}
+                  <div className="mt-4 p-3.5 bg-slate-50 rounded-2xl border border-gray-200 space-y-1.5 text-xs font-semibold">
+                    <div className="flex items-center gap-1.5 text-slate-800">
+                      <MapPin className="w-3.5 h-3.5 text-amber-600" /> Locality: {address?.areaName || address?.city || 'Pune'}
                     </div>
-                    <div className="flex items-center gap-1.5 text-neutral-300">
-                      <Calendar className="w-3.5 h-3.5 text-yellow-500" /> Date: {b.scheduledDate} ({b.scheduledTime})
+                    <div className="flex items-center gap-1.5 text-slate-800">
+                      <Calendar className="w-3.5 h-3.5 text-amber-600" /> Date: {b.scheduledDate} ({b.scheduledTime})
                     </div>
-                    <div className="flex items-center gap-1.5 text-yellow-400 font-semibold pt-1 border-t border-neutral-800">
-                      <DollarSign className="w-3.5 h-3.5" /> Agency Payout: ₹{payoutAmt}
+                    <div className="flex items-center gap-1.5 text-emerald-800 font-black pt-1 border-t border-gray-200">
+                      <DollarSign className="w-3.5 h-3.5 text-emerald-600" /> Agency Payout: ₹{payoutAmt?.toLocaleString()}
                     </div>
                   </div>
                 </div>
@@ -136,9 +136,9 @@ export default function AgencyJobsClientView({ bookings }: AgencyJobsClientViewP
                 <div className="pt-2">
                   <Link
                     href={`/agency/jobs/${b.id}`}
-                    className="w-full py-2.5 bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-xs uppercase tracking-wider rounded-xl transition flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-[#FACC15] hover:bg-[#EAB308] text-black font-black text-xs uppercase tracking-wider rounded-xl shadow-xs transition-all flex items-center justify-center gap-2"
                   >
-                    Manage Job <ArrowRight className="w-3.5 h-3.5" />
+                    Manage Job <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
                   </Link>
                 </div>
               </div>

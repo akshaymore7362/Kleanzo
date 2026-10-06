@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircle2, AlertTriangle, LifeBuoy } from 'lucide-react';
 import { logoutAction } from '@/actions/auth-actions';
 import TopNav, { type Tab } from './TopNav';
@@ -19,6 +19,12 @@ export default function AgencyDashboard({ currentUser, agency, pendingJobs, acti
   const [tab, setTab] = useState<Tab>('dashboard');
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    }
+  }, [tab]);
 
   const notify = (msg: string, ok = true) => {
     setToast({ msg, ok });

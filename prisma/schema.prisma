@@ -243,6 +243,7 @@ model Agency {
   settlements           Settlement[]
   partnerPayouts        PartnerPayout[]
   additionalWorkRequests AdditionalWorkRequest[]
+  statusHistory         AgencyStatusHistory[]
 }
 
 model PartnerDocument {
@@ -316,6 +317,22 @@ model AgencyCommercialRule {
   commissionValue Float    @default(15.0)
   active          Boolean  @default(true)
   updatedAt       DateTime @updatedAt
+}
+
+model AgencyStatusHistory {
+  id             String   @id @default(uuid())
+  agencyId       String
+  agency         Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  fromStatus     String
+  toStatus       String
+  action         String   // APPROVE, ACTIVATE, SUSPEND, REJECT, REQUEST_CHANGES, RESUBMIT
+  performedBy    String
+  performedRole  String
+  reason         String?
+  sectionKeys    String?
+  createdAt      DateTime @default(now())
+
+  @@index([agencyId])
 }
 
 // ==========================================

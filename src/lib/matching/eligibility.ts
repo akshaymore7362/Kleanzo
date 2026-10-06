@@ -18,13 +18,16 @@ export function checkEligibility(
   }
 
   // Rule 2: Service Capability
-  if (agency.supportedServices && agency.supportedServices.length > 0) {
-    for (const reqService of requirement.services) {
-      const handlesService = agency.supportedServices.some(
-        s => s.toLowerCase() === reqService.serviceSlug.toLowerCase()
-      );
+  if (agency.supportedServices && agency.supportedServices.length > 0 && Array.isArray(requirement.services)) {
+    for (const reqItem of requirement.services) {
+      const slug = (typeof reqItem === 'string' ? reqItem : (reqItem?.serviceSlug || '')).toLowerCase();
+      if (!slug) continue;
+      const handlesService = agency.supportedServices.some(s => {
+        const str = (s || '').toLowerCase();
+        return str === slug || str.startsWith(slug) || slug.startsWith(str);
+      });
       if (!handlesService) {
-        reasons.push(`Does not offer service: ${reqService.serviceSlug}`);
+        reasons.push(`Does not offer service: ${slug}`);
       }
     }
   }

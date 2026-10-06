@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Check, ShieldCheck, Building2, CreditCard, FileText, Rocket,
+  Check, ShieldCheck, Building2, CreditCard, FileText, Rocket, Sparkles,
   Phone, Upload, Plus, X, Loader2, AlertTriangle, CheckCircle2,
   Edit3, ArrowRight, ArrowLeft, Lock, FileCheck, Eye, EyeOff
 } from 'lucide-react';
@@ -37,41 +37,60 @@ const EQUIPMENT_OPTIONS = [
 ];
 
 function StepProgress({ current, onJump }: { current: number; onJump: (stepId: number) => void }) {
+  const percent = Math.round((current / STEPS.length) * 100);
   return (
-    <div className="w-full overflow-x-auto pb-2">
-      <div className="flex items-center min-w-[720px] sm:min-w-0 justify-between">
-        {STEPS.map((step, idx) => {
-          const isDone = step.id < current;
-          const isActive = step.id === current;
-          const Icon = step.icon;
-          return (
-            <React.Fragment key={step.id}>
-              <button
-                type="button"
-                onClick={() => { if (step.id <= current) onJump(step.id); }}
-                className={`flex flex-col items-center gap-1.5 shrink-0 cursor-pointer ${step.id <= current ? 'hover:scale-105' : 'cursor-not-allowed opacity-60'} transition-all`}
-              >
-                <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center border-2 font-black text-xs transition-all ${
-                    isDone
-                      ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
-                      : isActive
-                      ? 'bg-[#FACC15] border-[#FACC15] text-black shadow-md ring-2 ring-amber-300'
-                      : 'bg-gray-100 border-gray-200 text-gray-400'
-                  }`}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+        <span className="flex items-center gap-1.5 font-black text-slate-900">
+          <Sparkles className="w-4 h-4 text-amber-500" /> Onboarding Progress
+        </span>
+        <span className="bg-[#FEF08A] text-amber-950 px-3 py-0.5 rounded-full text-[11px] font-black border border-[#FDE047]">
+          Step {current} of {STEPS.length} ({percent}%)
+        </span>
+      </div>
+
+      <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+        <div 
+          className="bg-gradient-to-r from-emerald-500 to-[#FACC15] h-1.5 rounded-full transition-all duration-500 ease-out" 
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+
+      <div className="w-full overflow-x-auto pb-2 scrollbar-none">
+        <div className="flex items-center min-w-[720px] sm:min-w-0 justify-between">
+          {STEPS.map((step, idx) => {
+            const isDone = step.id < current;
+            const isActive = step.id === current;
+            const Icon = step.icon;
+            return (
+              <React.Fragment key={step.id}>
+                <button
+                  type="button"
+                  onClick={() => { if (step.id <= current) onJump(step.id); }}
+                  className={`flex flex-col items-center gap-1.5 shrink-0 cursor-pointer ${step.id <= current ? 'hover:scale-105' : 'cursor-not-allowed opacity-60'} transition-all`}
                 >
-                  {isDone ? <Check className="w-4 h-4 stroke-[3]" /> : <Icon className="w-4 h-4" />}
-                </div>
-                <span className={`text-[10px] font-bold text-center w-20 ${isActive ? 'text-slate-900 font-black' : isDone ? 'text-emerald-700' : 'text-gray-400'}`}>
-                  {step.label}
-                </span>
-              </button>
-              {idx < STEPS.length - 1 && (
-                <div className={`h-0.5 flex-1 mx-1 ${step.id < current ? 'bg-emerald-600' : 'bg-gray-200'}`} />
-              )}
-            </React.Fragment>
-          );
-        })}
+                  <div
+                    className={`w-9 h-9 rounded-2xl flex items-center justify-center border-2 font-black text-xs transition-all ${
+                      isDone
+                        ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
+                        : isActive
+                        ? 'bg-[#FACC15] border-[#FACC15] text-black shadow-md ring-4 ring-amber-200 scale-110'
+                        : 'bg-gray-100 border-gray-200 text-gray-400'
+                    }`}
+                  >
+                    {isDone ? <Check className="w-4 h-4 stroke-[3]" /> : <Icon className="w-4 h-4" />}
+                  </div>
+                  <span className={`text-[10px] font-bold text-center w-20 ${isActive ? 'text-slate-900 font-black' : isDone ? 'text-emerald-700 font-extrabold' : 'text-gray-400'}`}>
+                    {step.label}
+                  </span>
+                </button>
+                {idx < STEPS.length - 1 && (
+                  <div className={`h-0.5 flex-1 mx-1 transition-all duration-500 ${step.id < current ? 'bg-emerald-600' : 'bg-gray-200'}`} />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -99,6 +118,12 @@ export default function OnboardingWizard({ initialAgency, services }: { initialA
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    }
+  }, [step]);
 
   const notify = (msg: string | null, ok = false) => {
     if (ok) { setSuccess(msg); setError(null); } else { setError(msg); setSuccess(null); }
@@ -400,8 +425,18 @@ function OtpStep({ agency, busy, setBusy, notify, onBack, onDone }: any) {
       ) : (
         <div className="p-6 bg-slate-50 rounded-2xl border border-gray-200 space-y-4 text-center">
           {devOtp && (
-            <div className="p-3 bg-amber-100 border border-amber-300 rounded-xl text-xs font-black text-amber-900 inline-block">
-              DEV TEST OTP: <span className="text-red-700 font-extrabold tracking-widest">{devOtp}</span>
+            <div className="p-3 bg-amber-100 border border-amber-300 rounded-xl text-xs font-black text-amber-900 flex items-center justify-between gap-3">
+              <span>TEST OTP: <strong className="text-red-700 font-extrabold tracking-widest text-sm">{devOtp}</strong></span>
+              <button
+                type="button"
+                onClick={() => {
+                  const arr = (devOtp || '123456').split('').slice(0, 6);
+                  setDigits(arr);
+                }}
+                className="bg-amber-800 hover:bg-amber-900 text-white text-[11px] font-black px-3 py-1.5 rounded-lg shadow-sm"
+              >
+                Auto-fill Code
+              </button>
             </div>
           )}
           <p className="text-xs text-slate-600 font-semibold">Enter the 6-digit code sent to {agency.phone}</p>
@@ -430,7 +465,7 @@ function OtpStep({ agency, busy, setBusy, notify, onBack, onDone }: any) {
           <div className="flex justify-between pt-2">
             <button onClick={onBack} className="px-6 py-3 rounded-xl border border-gray-200 text-xs font-bold text-slate-600">Back</button>
             <button disabled={busy} onClick={verify} className="bg-[#FACC15] hover:bg-amber-400 text-black font-black text-xs px-8 py-3 rounded-xl shadow-md uppercase tracking-wider">
-              Verify OTP & Continue →
+              {busy ? 'Verifying...' : 'Verify OTP & Continue →'}
             </button>
           </div>
         </div>

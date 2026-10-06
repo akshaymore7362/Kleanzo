@@ -350,6 +350,9 @@ export default function CustomerBookingWizard() {
   };
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    }
     if (step === 5) {
       fetchEligibleAgencies();
     }
@@ -474,78 +477,96 @@ export default function CustomerBookingWizard() {
     }
   };
 
+  const progressPercent = Math.round((step / 9) * 100);
+
   return (
-    <div className="bg-[#F8FAFC] min-h-screen py-8 font-sans text-gray-800">
+    <div className="bg-[#F8FAFC] min-h-screen py-6 sm:py-10 font-sans text-gray-800 pb-24 sm:pb-12">
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {!bookingConfirmed ? (
           <div className="space-y-6">
             {/* TOP HEADER & PROGRESS STEPPER */}
-            <div className="bg-white rounded-3xl p-5 border border-gray-200 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#FACC15] text-black font-black flex items-center justify-center text-sm shadow-sm">
+            <div className="bg-white rounded-3xl p-5 sm:p-6 border border-gray-200/80 shadow-md space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-[#FACC15] text-black font-black flex items-center justify-center text-lg shadow-sm">
                     K
                   </div>
                   <div>
-                    <span className="font-black text-base text-black flex items-center gap-1">
-                      Kleanzo <span className="w-1.5 h-1.5 rounded-full bg-[#FACC15]" />
+                    <span className="font-black text-lg text-black flex items-center gap-1.5 leading-tight">
+                      Kleanzo <span className="w-2 h-2 rounded-full bg-[#FACC15] animate-pulse" />
                     </span>
-                    <span className="text-[9px] font-black text-gray-400 tracking-wider block leading-none uppercase">
+                    <span className="text-[10px] font-black text-gray-400 tracking-widest block uppercase">
                       DIRT GONE. SHINE ON.
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-black bg-[#FEF08A] px-3.5 py-1 rounded-full border border-[#FDE047]">
-                    Step {step} of 9
+                <div className="flex items-center gap-3">
+                  <div className="hidden sm:flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-full border border-gray-200 text-xs font-bold text-gray-700">
+                    <Clock className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Est. Time: ~2 min</span>
+                  </div>
+                  <span className="text-xs font-black text-black bg-[#FEF08A] px-4 py-1.5 rounded-full border border-[#FDE047] shadow-2xs">
+                    Step {step} of 9 ({progressPercent}% Completed)
                   </span>
                 </div>
               </div>
 
-              {/* 9-Step Stepper Flow Bar */}
-              <div className="flex items-center justify-between overflow-x-auto pt-2 pb-1 border-t border-gray-100">
+              {/* Progress Line Bar */}
+              <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-amber-400 to-[#FACC15] h-1.5 rounded-full transition-all duration-500 ease-out" 
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+
+              {/* 7-Step Stepper Flow Bar */}
+              <div className="flex items-center justify-between overflow-x-auto pt-2 pb-1 gap-1 border-t border-gray-100 scrollbar-none">
                 {[
-                  { num: 1, label: 'Service' },
-                  { num: 2, label: 'Property' },
-                  { num: 3, label: 'Requirements' },
-                  { num: 4, label: 'Details' },
-                  { num: 5, label: 'Location' },
-                  { num: 6, label: 'Partner' },
-                  { num: 7, label: 'Schedule' },
-                  { num: 8, label: 'Review' },
-                  { num: 9, label: 'Payment' },
+                  { num: 1, label: 'Service', icon: Sparkles },
+                  { num: 2, label: 'Property', icon: Home },
+                  { num: 3, label: 'Needs', icon: SlidersHorizontal },
+                  { num: 4, label: 'Details', icon: UserCheck },
+                  { num: 5, label: 'Location', icon: MapPin },
+                  { num: 6, label: 'Schedule', icon: Calendar },
+                  { num: 7, label: 'Review & Pay', icon: CreditCard },
                 ].map((s, i, arr) => {
                   const active = step === s.num;
                   const done = step > s.num;
+                  const StepIcon = s.icon;
                   return (
                     <React.Fragment key={s.num}>
                       <button
                         type="button"
                         onClick={() => done && setStep(s.num)}
-                        className={`flex flex-col items-center min-w-[55px] cursor-pointer transition ${
-                          active ? 'text-black font-black' : done ? 'text-emerald-700 font-bold' : 'text-gray-400'
+                        disabled={!done && !active}
+                        className={`flex flex-col items-center min-w-[62px] cursor-pointer transition-all ${
+                          active
+                            ? 'text-black font-black scale-105'
+                            : done
+                            ? 'text-emerald-700 font-bold hover:scale-105'
+                            : 'text-gray-400 cursor-not-allowed'
                         }`}
                       >
                         <div
-                          className={`w-6 h-6 rounded-full text-[11px] font-black flex items-center justify-center transition-all ${
+                          className={`w-7 h-7 rounded-xl text-[11px] font-black flex items-center justify-center transition-all ${
                             active
-                              ? 'bg-[#FACC15] text-black shadow-sm ring-2 ring-[#FEF08A]'
+                              ? 'bg-[#FACC15] text-black shadow-md ring-4 ring-[#FEF08A] scale-110'
                               : done
-                              ? 'bg-[#059669] text-white'
+                              ? 'bg-[#059669] text-white shadow-xs'
                               : 'bg-gray-100 text-gray-400 border border-gray-200'
                           }`}
                         >
-                          {done ? <Check className="w-3.5 h-3.5" /> : s.num}
+                          {done ? <Check className="w-4 h-4 stroke-[3]" /> : <StepIcon className="w-3.5 h-3.5" />}
                         </div>
-                        <span className="text-[9px] mt-1 font-bold leading-none hidden sm:inline">{s.label}</span>
+                        <span className="text-[9px] mt-1.5 font-bold leading-none hidden sm:inline">{s.label}</span>
                       </button>
 
                       {i < arr.length - 1 && (
                         <div
-                          className={`h-0.5 flex-1 mx-1 hidden sm:block ${
+                          className={`h-0.5 flex-1 mx-1 hidden sm:block transition-all duration-500 ${
                             step > s.num ? 'bg-[#059669]' : 'bg-gray-200'
                           }`}
                         />
@@ -556,10 +577,12 @@ export default function CustomerBookingWizard() {
               </div>
             </div>
 
-            {/* MAIN WIZARD CONTAINER */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-xl">
-              {/* STEP 1: SELECT SERVICE */}
-              {step === 1 && (
+            {/* MAIN 2-COLUMN RESPONSIVE GRID */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* LEFT COLUMN: STEP FORM CONTENT (8 COLS) */}
+              <div className="lg:col-span-8 bg-white rounded-3xl p-6 sm:p-8 border border-gray-200/80 shadow-xl space-y-6">
+                {/* STEP 1: SELECT SERVICE */}
+                {step === 1 && (
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-xl font-black text-black">What do you need cleaned?</h2>
@@ -1005,195 +1028,18 @@ export default function CustomerBookingWizard() {
                     <button
                       type="button"
                       onClick={() => setStep(6)}
-                      className="bg-[#FACC15] hover:bg-[#EAB308] text-black font-black text-xs px-8 py-3.5 rounded-xl flex items-center gap-2 shadow-sm uppercase tracking-wider"
-                    >
-                      Find Nearby Partners <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 6: NEARBY ELIGIBLE PARTNER AGENCY SELECTION */}
-              {step === 6 && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-xl font-black text-black">Choose your Kleanzo Partner</h2>
-                    <p className="text-xs text-gray-500 font-medium mt-1">
-                      Verified cleaning partners available near {locationInfo.area}, {locationInfo.city}
-                    </p>
-                  </div>
-
-                  {/* Filter & Sort Bar */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 bg-gray-50 p-3 rounded-2xl border border-gray-200 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-gray-600">Sort by:</span>
-                      {[
-                        { key: 'NEARBY', label: 'Nearby' },
-                        { key: 'RATING', label: 'Rating' },
-                        { key: 'EXPERIENCE', label: 'Experience' },
-                      ].map((s) => (
-                        <button
-                          key={s.key}
-                          type="button"
-                          onClick={() => setAgencySortBy(s.key as any)}
-                          className={`px-3 py-1.5 rounded-xl font-bold transition ${
-                            agencySortBy === s.key ? 'bg-[#FACC15] text-black shadow-2xs' : 'text-gray-600 hover:bg-gray-200'
-                          }`}
-                        >
-                          {s.label}
-                        </button>
-                      ))}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowMapMobile(!showMapMobile)}
-                      className="sm:hidden text-xs font-black text-black underline flex items-center gap-1"
-                    >
-                      <MapPin className="w-3.5 h-3.5" /> {showMapMobile ? 'Hide Map' : 'View Map'}
-                    </button>
-                  </div>
-
-                  {/* Split Layout: Desktop LEFT Agency List | RIGHT Interactive Map */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                    {/* Left: Agency Cards */}
-                    <div className="lg:col-span-7 space-y-4">
-                      {loadingAgencies && (
-                        <div className="p-8 text-center text-xs font-bold text-gray-500 bg-gray-50 rounded-2xl border border-gray-200">
-                          Searching nearby verified partners...
-                        </div>
-                      )}
-
-                      {eligibleAgencies.map((agency) => {
-                        const isSelected = selectedAgency?.id === agency.id;
-                        return (
-                          <div
-                            key={agency.id}
-                            className={`p-5 rounded-3xl border transition-all relative ${
-                              isSelected
-                                ? 'border-[#FACC15] bg-[#FFFDF0] ring-2 ring-[#FACC15] shadow-md'
-                                : 'border-gray-200 bg-white hover:border-gray-300'
-                            }`}
-                          >
-                            <div className="flex items-start justify-between gap-4">
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <h3 className="text-base font-black text-black">{agency.name}</h3>
-                                  <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-0.5 rounded-full flex items-center gap-1 border border-emerald-200">
-                                    <Check className="w-3 h-3" /> Kleanzo Verified Partner
-                                  </span>
-                                </div>
-
-                                <p className="text-xs text-gray-500 font-medium mt-1 leading-snug">{agency.description}</p>
-                              </div>
-
-                              <div className="bg-black text-white px-3 py-1 rounded-full text-xs font-black shrink-0 flex items-center gap-1 border border-gray-800">
-                                <Star className="w-3.5 h-3.5 text-[#FACC15] fill-[#FACC15]" />
-                                <span>{agency.rating}</span>
-                              </div>
-                            </div>
-
-                            {/* Details Row */}
-                            <div className="mt-4 pt-3 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-bold text-gray-700">
-                              <div>
-                                <span className="text-[10px] text-gray-400 block font-bold">Distance</span>
-                                <span>📍 {agency.distanceKm} km away</span>
-                              </div>
-                              <div>
-                                <span className="text-[10px] text-gray-400 block font-bold">Service Area</span>
-                                <span className="truncate block">{agency.serviceAreaNames}</span>
-                              </div>
-                              <div>
-                                <span className="text-[10px] text-gray-400 block font-bold">Experience</span>
-                                <span>{agency.experienceYears}+ years</span>
-                              </div>
-                              <div>
-                                <span className="text-[10px] text-gray-400 block font-bold">Jobs Done</span>
-                                <span>{agency.completedJobs}+ completed</span>
-                              </div>
-                            </div>
-
-                            {/* Actions */}
-                            <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-                              <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
-                                ✓ Available for your selected service
-                              </span>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setCandidateToConfirm(agency);
-                                  setShowConfirmAgencyDialog(true);
-                                }}
-                                className={`px-5 py-2 rounded-xl text-xs font-black uppercase transition ${
-                                  isSelected
-                                    ? 'bg-[#FACC15] text-black shadow-sm'
-                                    : 'bg-black hover:bg-gray-800 text-white'
-                                }`}
-                              >
-                                {isSelected ? 'Selected ✓' : 'Select Partner'}
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Right: Map Box */}
-                    <div className={`lg:col-span-5 bg-slate-900 rounded-3xl p-5 border border-gray-800 h-80 lg:h-[480px] relative overflow-hidden ${showMapMobile ? 'block' : 'hidden lg:block'}`}>
-                      <div className="absolute inset-0 bg-[radial-gradient(#FACC15_1px,transparent_1px)] [background-size:18px_18px] opacity-20" />
-                      
-                      <div className="relative z-10 space-y-3">
-                        <div className="bg-black/80 backdrop-blur-md px-3.5 py-1.5 rounded-full text-white text-xs font-black inline-flex items-center gap-1.5 border border-white/10">
-                          <MapPin className="w-3.5 h-3.5 text-[#FACC15]" />
-                          <span>Nearby Fulfillment Zone</span>
-                        </div>
-
-                        {/* Map Pins for Partners */}
-                        <div className="pt-12 space-y-6">
-                          {eligibleAgencies.map((ag) => (
-                            <div
-                              key={ag.id}
-                              onClick={() => setSelectedAgency(ag)}
-                              className={`p-3 rounded-2xl border backdrop-blur-md cursor-pointer transition transform hover:scale-102 ${
-                                selectedAgency?.id === ag.id
-                                  ? 'bg-[#FACC15] text-black border-[#FACC15] shadow-lg'
-                                  : 'bg-black/80 text-white border-white/20'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between text-xs font-black">
-                                <span>📍 {ag.name}</span>
-                                <span>{ag.distanceKm} km</span>
-                              </div>
-                              <div className="text-[10px] opacity-80 mt-0.5">Rating {ag.rating} ⭐ • {ag.completedJobs}+ jobs</div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 flex justify-between">
-                    <button type="button" onClick={() => setStep(5)} className="text-xs font-bold text-gray-500 hover:text-black">
-                      Back
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setStep(7)}
-                      className="bg-[#FACC15] hover:bg-[#EAB308] text-black font-black text-xs px-8 py-3.5 rounded-xl flex items-center gap-2 shadow-sm uppercase tracking-wider"
+                      className="bg-[#FACC15] hover:bg-[#EAB308] text-black font-black text-xs px-8 py-3.5 rounded-xl flex items-center gap-2 shadow-sm uppercase tracking-wider cursor-pointer"
                     >
                       Continue to Schedule <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-              )}
-
-              {/* STEP 7: SCHEDULE (DATE & TIME) */}
-              {step === 7 && (
+              )}              {/* STEP 6: SCHEDULE (DATE & TIME) */}
+              {step === 6 && (
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-xl font-black text-black">When should we clean?</h2>
-                    <p className="text-xs text-gray-500 font-medium mt-1">Select date and arrival slot for {selectedAgency?.name || 'Selected Partner'}</p>
+                    <p className="text-xs text-gray-500 font-medium mt-1">Select date and arrival slot for your Kleanzo service</p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
@@ -1250,26 +1096,26 @@ export default function CustomerBookingWizard() {
                   </div>
 
                   <div className="pt-4 flex justify-between">
-                    <button type="button" onClick={() => setStep(6)} className="text-xs font-bold text-gray-500 hover:text-black">
+                    <button type="button" onClick={() => setStep(5)} className="text-xs font-bold text-gray-500 hover:text-black">
                       Back
                     </button>
                     <button
                       type="button"
-                      onClick={() => setStep(8)}
+                      onClick={() => setStep(7)}
                       className="bg-[#FACC15] hover:bg-[#EAB308] text-black font-black text-xs px-8 py-3.5 rounded-xl flex items-center gap-2 shadow-sm uppercase tracking-wider"
                     >
-                      Review Booking <ArrowRight className="w-4 h-4" />
+                      Review & Pay <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* STEP 8: BOOKING REVIEW & PRICE BREAKDOWN */}
-              {step === 8 && (
+              {/* STEP 7: BOOKING REVIEW & PRICE BREAKDOWN */}
+              {step === 7 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-xl font-black text-black">Review your booking</h2>
-                    <p className="text-xs text-gray-500 font-medium mt-1">Review your service details, selected partner, and pricing before advance payment</p>
+                    <h2 className="text-xl font-black text-black">Review & Pay</h2>
+                    <p className="text-xs text-gray-500 font-medium mt-1">Review your service details, Kleanzo commitment, and pricing before payment</p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
@@ -1293,10 +1139,10 @@ export default function CustomerBookingWizard() {
                       </div>
 
                       <div>
-                        <span className="text-gray-400 block text-[10px] uppercase font-bold">Selected Partner Agency</span>
+                        <span className="text-gray-400 block text-[10px] uppercase font-bold">Service Assignment</span>
                         <span className="font-black text-black flex items-center gap-1.5 mt-0.5">
-                          {selectedAgency?.name || 'Apex Cleaning Services'}
-                          <span className="bg-emerald-100 text-emerald-800 text-[9px] px-2 py-0.5 rounded-full font-black">✓ Verified</span>
+                          Kleanzo Assigned Professional
+                          <span className="bg-amber-100 text-amber-900 text-[9px] px-2 py-0.5 rounded-full font-black">✓ Location Matched</span>
                         </span>
                       </div>
 
@@ -1404,6 +1250,116 @@ export default function CustomerBookingWizard() {
                 </div>
               )}
             </div>
+
+              {/* RIGHT COLUMN: STICKY LIVE BOOKING SUMMARY SIDEBAR (4 COLS) */}
+              <div className="lg:col-span-4 sticky top-24 space-y-4">
+                <div className="bg-slate-900 text-white rounded-3xl p-6 border border-slate-800 shadow-2xl space-y-5">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <h3 className="text-sm font-black text-white flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[#FACC15]" /> Live Booking Summary
+                    </h3>
+                    <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-slate-800 text-[#FACC15] border border-slate-700">
+                      Step {step} of 9
+                    </span>
+                  </div>
+
+                  <div className="space-y-3.5 text-xs font-semibold">
+                    {/* Service */}
+                    <div className="flex items-start justify-between bg-slate-800/60 p-3 rounded-2xl border border-slate-700/50">
+                      <div>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Selected Service</span>
+                        <span className="text-white font-black">{selectedMainService.name}</span>
+                        <span className="text-[10px] text-gray-400 block mt-0.5">Est. {selectedMainService.duration}</span>
+                      </div>
+                      <span className="text-sm font-black text-[#FACC15]">₹{selectedMainService.price.toLocaleString()}</span>
+                    </div>
+
+                    {/* Property */}
+                    <div className="bg-slate-800/40 p-3 rounded-2xl border border-slate-800/80 space-y-1">
+                      <span className="text-[10px] text-gray-400 font-bold uppercase block">Property Details</span>
+                      <p className="text-slate-200 font-extrabold text-xs">
+                        {propertyDetails.propertyType} {propertyDetails.bhk ? `• ${propertyDetails.bhk}` : ''} ({propertyDetails.sqft || '1200'} sq.ft)
+                      </p>
+                      <p className="text-[10px] text-gray-400">Floor {propertyDetails.floor} • Lift: {propertyDetails.hasLift} • {propertyDetails.isOccupied}</p>
+                    </div>
+
+                    {/* Requirements */}
+                    {selectedRequirements.length > 0 && (
+                      <div className="bg-slate-800/40 p-3 rounded-2xl border border-slate-800/80 space-y-1">
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Special Requirements ({selectedRequirements.length})</span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {selectedRequirements.map(req => (
+                            <span key={req} className="text-[9px] font-bold bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-md">
+                              {req}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Service Fulfillment Badge */}
+                    <div className="bg-slate-800/40 p-3 rounded-2xl border border-slate-800/80 space-y-1">
+                      <span className="text-[10px] text-gray-400 font-bold uppercase block">Kleanzo Service</span>
+                      <p className="text-emerald-400 font-black text-xs flex items-center gap-1">
+                        <ShieldCheck className="w-3.5 h-3.5" /> Kleanzo Managed Service
+                      </p>
+                    </div>
+
+                    {/* Schedule */}
+                    {step >= 6 && schedule.date && (
+                      <div className="bg-slate-800/40 p-3 rounded-2xl border border-slate-800/80 space-y-1">
+                        <span className="text-[10px] text-gray-400 font-bold uppercase block">Scheduled Slot</span>
+                        <p className="text-emerald-400 font-black text-xs">
+                          {schedule.displayDate} @ {schedule.time}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Price Breakdown */}
+                  <div className="pt-3 border-t border-slate-800 space-y-2 text-xs">
+                    <div className="flex justify-between text-gray-400">
+                      <span>Base Service Fee</span>
+                      <span className="text-white font-bold">₹{selectedMainService.price.toLocaleString()}</span>
+                    </div>
+                    {selectedRequirements.length > 0 && (
+                      <div className="flex justify-between text-gray-400">
+                        <span>Stain Remediation</span>
+                        <span className="text-white font-bold">₹{(selectedRequirements.length * 250).toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-base font-black text-white pt-2 border-t border-slate-800">
+                      <span>Total Price</span>
+                      <span className="text-[#FACC15]">₹{totalCustomerPrice.toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  {/* Action CTA inside Sidebar */}
+                  {step < 7 && (
+                    <button
+                      type="button"
+                      onClick={() => setStep(step + 1)}
+                      className="w-full bg-[#FACC15] hover:bg-[#EAB308] text-black font-black text-xs py-3.5 rounded-2xl shadow-lg flex items-center justify-center gap-2 uppercase tracking-wider transition-all hover:scale-[1.02] cursor-pointer"
+                    >
+                      <span>Continue to Step {step + 1}</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  )}
+
+                  {/* Trust Badges */}
+                  <div className="pt-2 border-t border-slate-800 text-[10px] text-gray-400 space-y-1.5 font-medium">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>100% Quality & Satisfaction Guarantee</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <UserCheck className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>Verified & Police-Checked Crew</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           /* CONFIRMATION SUCCESS SCREEN */
@@ -1425,20 +1381,27 @@ export default function CustomerBookingWizard() {
             <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 text-xs font-bold text-gray-700 text-left space-y-2">
               <div className="flex justify-between"><span>Service:</span><span className="text-black font-black">{selectedMainService.name}</span></div>
               <div className="flex justify-between"><span>Location:</span><span>{locationInfo.area}, {locationInfo.city}</span></div>
-              <div className="flex justify-between"><span>Partner:</span><span className="text-black font-black">{selectedAgency?.name || 'Apex Cleaning Services'}</span></div>
+              <div className="flex justify-between"><span>Assignment:</span><span className="text-emerald-700 font-black">Kleanzo Assigning Professional</span></div>
               <div className="flex justify-between"><span>Date & Time:</span><span>{schedule.displayDate}, {schedule.time}</span></div>
+            </div>
+
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-left flex items-start gap-3">
+              <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-900 font-medium">
+                <strong>Kleanzo Managed Service:</strong> Based on your location and schedule, Kleanzo will automatically assign a verified service professional to your booking.
+              </p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <Link
                 href="/bookings"
-                className="flex-1 bg-black hover:bg-gray-800 text-white font-black text-xs py-3.5 rounded-xl uppercase tracking-wider"
+                className="flex-1 bg-black hover:bg-gray-800 text-white font-black text-xs py-3.5 rounded-xl uppercase tracking-wider text-center"
               >
                 Track My Booking Status
               </Link>
               <Link
                 href="/"
-                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-black text-xs py-3.5 rounded-xl uppercase tracking-wider"
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-black text-xs py-3.5 rounded-xl uppercase tracking-wider text-center"
               >
                 Back to Home
               </Link>
@@ -1446,6 +1409,35 @@ export default function CustomerBookingWizard() {
           </div>
         )}
       </div>
+
+      {/* FLOATING MOBILE ACTION BAR */}
+      {!bookingConfirmed && (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md text-white p-3.5 border-t border-slate-800 shadow-2xl flex items-center justify-between">
+          <div>
+            <span className="text-[10px] text-gray-400 font-bold uppercase block truncate max-w-[140px]">{selectedMainService.name}</span>
+            <span className="text-base font-black text-[#FACC15]">₹{totalCustomerPrice.toLocaleString()}</span>
+          </div>
+
+          {step < 7 ? (
+            <button
+              type="button"
+              onClick={() => setStep(step + 1)}
+              className="bg-[#FACC15] hover:bg-[#EAB308] text-black font-black text-xs px-5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md uppercase tracking-wider cursor-pointer"
+            >
+              Step {step + 1} <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleConfirmAdvancePayment}
+              disabled={submitting}
+              className="bg-[#FACC15] hover:bg-[#EAB308] text-black font-black text-xs px-5 py-2.5 rounded-xl uppercase tracking-wider cursor-pointer"
+            >
+              CONFIRM & BOOK
+            </button>
+          )}
+        </div>
+      )}
 
       {/* CONFIRM AGENCY MODAL DIALOG */}
       {showConfirmAgencyDialog && candidateToConfirm && (

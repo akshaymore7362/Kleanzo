@@ -471,3 +471,135 @@ export async function getAssignmentHistoryAction(bookingId: string) {
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * Checks for expired job offers and automatically cascades matching to the next eligible agency.
+ */
+export async function expireJobOffersAction() {
+  try {
+    const expiredOffers = await prisma.assignmentOffer.findMany({
+      where: {
+        expiresAt: { lt: new Date() },
+        response: null,
+      },
+      include: {
+        assignment: true,
+      },
+    });
+
+    const results = [];
+    for (const offer of expiredOffers) {
+      if (offer.assignment.status === 'OFFER_SENT') {
+        await prisma.$transaction([
+          prisma.assignmentOffer.update({
+            where: { id: offer.id },
+            data: { response: 'EXPIRED', respondedAt: new Date() },
+          }),
+          prisma.assignment.update({
+            where: { id: offer.assignmentId },
+            data: { status: 'EXPIRED' },
+          }),
+        ]);
+
+        const nextResult = await runAutomaticAssignmentAction(offer.bookingId);
+        results.push({ offerId: offer.id, bookingId: offer.bookingId, nextResult });
+      }
+    }
+
+    return { success: true, expiredCount: results.length, details: results };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to expire job offers' };
+  }
+}
+
+/**
+ * Admin Reassignments of an agency with a required reason.
+ */
+export async function adminReassignAgencyAction(bookingId: string, newAgencyId: string, reason: string) {
+  try {
+    const user = await getCurrentUser();
+    assertRole(user, ['ADMIN', 'SUPER_ADMIN', 'OPERATIONS']);
+
+    if (!reason?.trim()) throw new Error('Reassignment reason is required');
+
+    const newAgency = await prisma.agency.findUnique({ where: { id: newAgencyId } });
+    if (!newAgency || !newAgency.active || newAgency.partnerStatus !== 'ACTIVE') {
+      throw new Error('Target agency is not active or eligible for assignment');
+    }
+
+    const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+    if (!booking) throw new Error('Booking not found');
+
+    const previousAgencyId = booking.agencyId;
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    const result = await prisma.$transaction(async (tx) => {
+      const assignment = await tx.assignment.create({
+        data: {
+          bookingId,
+          agencyId: newAgencyId,
+          assignedBy: user!.id,
+          assignmentMode: 'ADMIN',
+          assignmentReason: `REASSIGNMENT: ${reason.trim()}`,
+          status: 'OFFER_SENT',
+          offerExpiresAt: expiresAt,
+        },
+      });
+
+      const offer = await tx.assignmentOffer.create({
+        data: {
+          assignmentId: assignment.id,
+          bookingId,
+          agencyId: newAgencyId,
+          expiresAt,
+        },
+      });
+
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          bookingStatus: 'PARTNER_PENDING_ACCEPTANCE',
+          agencyId: newAgencyId,
+          assignedAgencyId: newAgencyId,
+          assignedAt: new Date(),
+          assignedBy: user!.id,
+          assignmentMode: 'ADMIN',
+          assignmentReason: `REASSIGNMENT: ${reason.trim()}`,
+          agencyResponseStatus: 'PENDING',
+        },
+      });
+
+      await tx.bookingStatusHistory.create({
+        data: {
+          bookingId,
+          fromStatus: booking.bookingStatus,
+          toStatus: 'PARTNER_PENDING_ACCEPTANCE',
+          changedBy: user!.id,
+          changedType: 'OPERATIONS',
+          remarks: `Admin reassigned booking from ${previousAgencyId || 'Previous Agency'} to ${newAgency.name}. Reason: ${reason}`,
+        },
+      });
+
+      await logAudit({
+        action: 'ADMIN_REASSIGNMENT',
+        entityType: 'Booking',
+        entityId: bookingId,
+        performedBy: user!.id,
+        actorType: 'OPERATIONS',
+        metadata: { previousAgencyId, newAgencyId, reason },
+      }, tx);
+
+      return { assignment, offer };
+    });
+
+    dispatchNotification({
+      event: 'AGENCY_ASSIGNED',
+      title: 'Reassigned Job Offer',
+      message: `Admin reassigned booking #${booking.bookingCode} to your agency. Reason: ${reason}`,
+    });
+
+    return { success: true, ...result };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to reassign agency' };
+  }
+}

@@ -217,24 +217,24 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans p-6 sm:p-10 space-y-8">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans p-6 sm:p-10 space-y-8">
       
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-neutral-900 border border-neutral-800 p-6 rounded-2xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-gray-200 p-6 rounded-3xl shadow-xs">
         <div>
-          <Link href="/agency/jobs" className="inline-flex items-center text-xs text-yellow-500 hover:text-yellow-400 mb-2 transition">
+          <Link href="/agency/jobs" className="inline-flex items-center text-xs font-bold text-[#E8B619] hover:underline mb-2 transition">
             <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Back to Agency Jobs
           </Link>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-white tracking-tight">
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
               Job #{job.bookingCode}
             </h1>
-            <span className="px-3 py-1 text-xs font-semibold rounded-full uppercase bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+            <span className="px-3 py-1 text-xs font-black rounded-full uppercase bg-amber-100 text-amber-900 border border-amber-200">
               {job.bookingStatus.replace(/_/g, ' ')}
             </span>
           </div>
-          <p className="text-xs text-neutral-400 mt-1">
-            Service: <strong className="text-white">{job.serviceName}</strong> • Property: {job.propertyType}
+          <p className="text-xs text-slate-500 font-medium mt-1">
+            Service: <strong className="text-slate-900">{job.serviceName}</strong> • Property: {job.propertyType}
           </p>
         </div>
 
@@ -244,14 +244,14 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
             <button
               onClick={() => setShowDeclineModal(true)}
               disabled={loading}
-              className="px-5 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 font-bold text-xs uppercase tracking-wider rounded-xl transition flex items-center gap-2"
+              className="px-5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-black text-xs uppercase tracking-wider rounded-2xl transition flex items-center gap-2 cursor-pointer"
             >
               <XCircle className="w-4 h-4" /> Decline Job
             </button>
             <button
               onClick={handleAcceptJob}
               disabled={loading}
-              className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center gap-2"
+              className="px-6 py-2.5 bg-[#FACC15] hover:bg-[#EAB308] text-black font-black text-xs uppercase tracking-wider rounded-2xl shadow-md transition flex items-center gap-2 cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4" /> Accept Job Offer
             </button>
@@ -260,7 +260,7 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
       </div>
 
       {msg && (
-        <div className="p-4 bg-neutral-900 border border-yellow-500/40 rounded-xl text-xs font-medium text-yellow-300">
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs font-bold text-amber-900 shadow-xs">
           {msg}
         </div>
       )}
@@ -269,28 +269,28 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* Customer & Locality */}
-        <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl space-y-3">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider text-yellow-500 flex items-center gap-2">
+        <div className="bg-white border border-gray-200 p-6 rounded-3xl shadow-xs space-y-3">
+          <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider text-[#E8B619] flex items-center gap-2">
             <MapPin className="w-4 h-4" /> Fulfillment Location
           </h2>
-          <div className="text-xs text-neutral-300 space-y-1.5">
-            <div><strong className="text-neutral-400">Locality:</strong> {job.area}, {job.city}</div>
-            <div><strong className="text-neutral-400">Full Address:</strong> {job.address}</div>
-            <div><strong className="text-neutral-400">Customer Name:</strong> {job.customerName}</div>
-            <div><strong className="text-neutral-400">Customer Phone:</strong> {job.customerPhone}</div>
+          <div className="text-xs text-slate-600 space-y-1.5 font-medium">
+            <div><strong className="text-slate-900">Locality:</strong> {job.area}, {job.city}</div>
+            <div><strong className="text-slate-900">Full Address:</strong> {job.address}</div>
+            <div><strong className="text-slate-900">Customer Name:</strong> {job.customerName}</div>
+            <div><strong className="text-slate-900">Customer Phone:</strong> {job.customerPhone}</div>
           </div>
         </div>
 
         {/* Schedule & Team */}
-        <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl space-y-3">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider text-yellow-500 flex items-center gap-2">
+        <div className="bg-white border border-gray-200 p-6 rounded-3xl shadow-xs space-y-3">
+          <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider text-[#E8B619] flex items-center gap-2">
             <Calendar className="w-4 h-4" /> Schedule & Team
           </h2>
-          <div className="text-xs text-neutral-300 space-y-1.5">
-            <div><strong className="text-neutral-400">Scheduled Date:</strong> {job.scheduledDate}</div>
-            <div><strong className="text-neutral-400">Time Slot:</strong> {job.scheduledTime}</div>
+          <div className="text-xs text-slate-600 space-y-1.5 font-medium">
+            <div><strong className="text-slate-900">Scheduled Date:</strong> {job.scheduledDate}</div>
+            <div><strong className="text-slate-900">Time Slot:</strong> {job.scheduledTime}</div>
             <div>
-              <strong className="text-neutral-400">Assigned Crew:</strong>{' '}
+              <strong className="text-slate-900">Assigned Crew:</strong>{' '}
               {job.assignedCrew.length > 0
                 ? job.assignedCrew.map((c: any) => `${c.name} (${c.role})`).join(', ')
                 : 'Pending Team Selection'}
@@ -299,13 +299,13 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
         </div>
 
         {/* Agency Financials */}
-        <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl space-y-3">
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider text-yellow-500 flex items-center gap-2">
+        <div className="bg-white border border-gray-200 p-6 rounded-3xl shadow-xs space-y-3">
+          <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider text-[#E8B619] flex items-center gap-2">
             <DollarSign className="w-4 h-4" /> Internal Agency Payout
           </h2>
-          <div className="text-xs text-neutral-300 space-y-2">
-            <div className="text-2xl font-bold text-yellow-400">₹{job.partnerPayout}</div>
-            <div className="text-[11px] text-neutral-400">
+          <div className="text-xs text-slate-600 space-y-2">
+            <div className="text-2xl font-black text-slate-900">₹{job.partnerPayout}</div>
+            <div className="text-[11px] text-slate-500 font-medium">
               Payout is eligible upon Admin verification after completion proof submission.
             </div>
           </div>
@@ -315,18 +315,18 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
 
       {/* SECTION 1: TEAM ASSIGNMENT PANEL */}
       {isAccepted && (
-        <div className="bg-neutral-900 border border-neutral-800 p-6 sm:p-8 rounded-2xl space-y-6">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-neutral-800 pb-3">
-            <Users className="w-5 h-5 text-yellow-500" /> Crew & Worker Assignment
+        <div className="bg-white border border-gray-200 p-6 sm:p-8 rounded-3xl shadow-xs space-y-6">
+          <h2 className="text-lg font-black text-slate-900 flex items-center gap-2 border-b border-gray-100 pb-3">
+            <Users className="w-5 h-5 text-[#E8B619]" /> Crew & Worker Assignment
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
             <div>
-              <label className="text-xs font-semibold text-neutral-300 block mb-2">Select Team Leader</label>
+              <label className="text-xs font-bold text-slate-700 block mb-2">Select Team Leader</label>
               <select
                 value={selectedLeader}
                 onChange={(e) => setSelectedLeader(e.target.value)}
-                className="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-white focus:border-yellow-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-gray-200 rounded-2xl p-3 text-slate-900 font-medium focus:border-[#E8B619] focus:bg-white focus:outline-none"
               >
                 <option value="">-- Choose Team Leader --</option>
                 {teamMembers.map((m) => (
@@ -338,10 +338,10 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-neutral-300 block mb-2">Select Cleaners / Helpers</label>
-              <div className="bg-neutral-950 border border-neutral-800 rounded-xl p-3 max-h-36 overflow-y-auto space-y-2">
+              <label className="text-xs font-bold text-slate-700 block mb-2">Select Cleaners / Helpers</label>
+              <div className="bg-slate-50 border border-gray-200 rounded-2xl p-3 max-h-36 overflow-y-auto space-y-2">
                 {teamMembers.filter(m => m.id !== selectedLeader).map((m) => (
-                  <label key={m.id} className="flex items-center gap-2 cursor-pointer text-neutral-200">
+                  <label key={m.id} className="flex items-center gap-2 cursor-pointer text-slate-700 font-medium">
                     <input
                       type="checkbox"
                       checked={selectedWorkers.includes(m.id)}
@@ -349,7 +349,7 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
                         if (e.target.checked) setSelectedWorkers([...selectedWorkers, m.id]);
                         else setSelectedWorkers(selectedWorkers.filter(id => id !== m.id));
                       }}
-                      className="rounded border-neutral-700 text-yellow-500 focus:ring-yellow-500"
+                      className="rounded border-gray-300 text-[#E8B619] focus:ring-[#E8B619]"
                     />
                     {m.name} ({m.phone})
                   </label>
@@ -361,7 +361,7 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
           <button
             onClick={handleAssignTeam}
             disabled={loading}
-            className="px-6 py-2.5 bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-yellow-500/20 transition"
+            className="px-6 py-2.5 bg-[#FACC15] hover:bg-[#EAB308] text-black font-black text-xs uppercase tracking-wider rounded-2xl shadow-md transition cursor-pointer"
           >
             Assign Team to Job
           </button>
@@ -370,20 +370,20 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
 
       {/* SECTION 2: JOB DAY OPERATIONAL STATUS */}
       {isAccepted && (
-        <div className="bg-neutral-900 border border-neutral-800 p-6 sm:p-8 rounded-2xl space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-800 pb-4">
+        <div className="bg-white border border-gray-200 p-6 sm:p-8 rounded-3xl shadow-xs space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
             <div>
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Truck className="w-5 h-5 text-yellow-500" /> Job Day Execution Controls
+              <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                <Truck className="w-5 h-5 text-[#E8B619]" /> Job Day Execution Controls
               </h2>
-              <p className="text-xs text-neutral-400">Update live operational progress as team moves to site and executes service.</p>
+              <p className="text-xs text-slate-500 font-medium">Update live operational progress as team moves to site and executes service.</p>
             </div>
 
             <button
               onClick={() => setShowAddWorkModal(true)}
-              className="px-4 py-2 bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 rounded-xl text-xs font-semibold hover:bg-yellow-500/30 transition flex items-center gap-2"
+              className="px-4 py-2 bg-amber-50 text-amber-800 border border-amber-200 rounded-2xl text-xs font-bold hover:bg-amber-100 transition flex items-center gap-2 cursor-pointer"
             >
-              <AlertCircle className="w-4 h-4" /> Request Additional Work
+              <AlertCircle className="w-4 h-4 text-amber-600" /> Request Additional Work
             </button>
           </div>
 
@@ -391,7 +391,7 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
             <button
               onClick={() => handleUpdateStatus('ON_THE_WAY')}
               disabled={loading}
-              className="px-5 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-white font-semibold text-xs rounded-xl border border-neutral-700 transition"
+              className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs rounded-2xl border border-gray-200 transition cursor-pointer"
             >
               🚚 Team On The Way
             </button>
@@ -399,7 +399,7 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
             <button
               onClick={() => handleUpdateStatus('ARRIVED')}
               disabled={loading}
-              className="px-5 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-white font-semibold text-xs rounded-xl border border-neutral-700 transition"
+              className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs rounded-2xl border border-gray-200 transition cursor-pointer"
             >
               📍 Arrived at Site
             </button>
@@ -407,7 +407,7 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
             <button
               onClick={() => handleUpdateStatus('WORK_STARTED')}
               disabled={loading}
-              className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-600/20 transition"
+              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs rounded-2xl shadow-md transition cursor-pointer"
             >
               ✨ Start Deep Cleaning
             </button>
@@ -417,26 +417,26 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
 
       {/* SECTION 3: COMPLETION PROOF SUBMISSION */}
       {isAccepted && (
-        <div className="bg-neutral-900 border border-neutral-800 p-6 sm:p-8 rounded-2xl space-y-6">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-neutral-800 pb-3">
-            <ShieldCheck className="w-5 h-5 text-emerald-400" /> Completion Proof & Photo Evidence Upload
+        <div className="bg-white border border-gray-200 p-6 sm:p-8 rounded-3xl shadow-xs space-y-6">
+          <h2 className="text-lg font-black text-slate-900 flex items-center gap-2 border-b border-gray-100 pb-3">
+            <ShieldCheck className="w-5 h-5 text-emerald-600" /> Completion Proof & Photo Evidence Upload
           </h2>
 
           <div className="space-y-4 text-xs">
             <div>
-              <label className="text-xs font-semibold text-neutral-300 block mb-1">Add Image URL (Before / After Photos)</label>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Add Image URL (Before / After Photos)</label>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={newPhotoUrl}
                   onChange={(e) => setNewPhotoUrl(e.target.value)}
                   placeholder="https://images.unsplash.com/..."
-                  className="flex-1 bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-white focus:border-yellow-500 focus:outline-none"
+                  className="flex-1 bg-slate-50 border border-gray-200 rounded-2xl p-3 text-slate-900 font-medium focus:border-[#E8B619] focus:bg-white focus:outline-none"
                 />
                 <button
                   type="button"
                   onClick={handleAddAfterPhoto}
-                  className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white rounded-xl font-semibold"
+                  className="px-4 py-2 bg-slate-900 hover:bg-black text-white rounded-2xl font-bold cursor-pointer transition"
                 >
                   Add Photo
                 </button>
@@ -444,10 +444,10 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
             </div>
 
             <div>
-              <div className="text-xs font-semibold text-neutral-400 mb-2">Uploaded Completion Photos ({afterPhotos.length})</div>
+              <div className="text-xs font-bold text-slate-600 mb-2">Uploaded Completion Photos ({afterPhotos.length})</div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {afterPhotos.map((url, idx) => (
-                  <div key={idx} className="relative aspect-video rounded-xl bg-neutral-950 border border-neutral-800 overflow-hidden">
+                  <div key={idx} className="relative aspect-video rounded-2xl bg-slate-100 border border-gray-200 overflow-hidden shadow-xs">
                     <img src={url} alt={`Proof ${idx + 1}`} className="w-full h-full object-cover" />
                   </div>
                 ))}
@@ -455,20 +455,20 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-neutral-300 block mb-1">Completion Notes</label>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Completion Notes</label>
               <textarea
                 value={completionNotes}
                 onChange={(e) => setCompletionNotes(e.target.value)}
                 placeholder="Details on scope completed, stains removed, chemical products used..."
                 rows={3}
-                className="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-white focus:border-yellow-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-gray-200 rounded-2xl p-3 text-slate-900 font-medium focus:border-[#E8B619] focus:bg-white focus:outline-none"
               />
             </div>
 
             <button
               onClick={handleSubmitCompletion}
               disabled={loading}
-              className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-500/20 transition flex items-center gap-2"
+              className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md transition flex items-center gap-2 cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4" /> Submit Completion Proof to Admin
             </button>
@@ -478,17 +478,17 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
 
       {/* Decline Job Modal */}
       {showDeclineModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 max-w-md w-full space-y-4">
-            <h3 className="text-base font-bold text-white">Decline Job Offer</h3>
-            <p className="text-xs text-neutral-400">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white border border-gray-200 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-xl">
+            <h3 className="text-base font-black text-slate-900">Decline Job Offer</h3>
+            <p className="text-xs text-slate-500 font-medium">
               Please select a mandatory reason for declining this booking offer.
             </p>
 
             <select
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-xs text-white focus:border-yellow-500 focus:outline-none"
+              className="w-full bg-slate-50 border border-gray-200 rounded-2xl p-3 text-xs text-slate-900 font-medium focus:border-[#E8B619] focus:bg-white focus:outline-none"
             >
               <option value="No Team Available">No Team Available</option>
               <option value="Schedule Conflict">Schedule Conflict</option>
@@ -501,14 +501,14 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setShowDeclineModal(false)}
-                className="px-4 py-2 bg-neutral-800 text-neutral-300 text-xs font-semibold rounded-xl hover:bg-neutral-700 transition"
+                className="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-2xl hover:bg-slate-200 transition cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeclineJob}
                 disabled={loading}
-                className="px-4 py-2 bg-red-500 hover:bg-red-400 text-black text-xs font-bold rounded-xl transition"
+                className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-black rounded-2xl transition cursor-pointer"
               >
                 Confirm Decline
               </button>
@@ -519,16 +519,16 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
 
       {/* Request Additional Work Modal */}
       {showAddWorkModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 max-w-md w-full space-y-4">
-            <h3 className="text-base font-bold text-white">Request Additional Work Authorization</h3>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white border border-gray-200 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-xl">
+            <h3 className="text-base font-black text-slate-900">Request Additional Work Authorization</h3>
 
             <input
               type="text"
               value={addWorkReason}
               onChange={(e) => setAddWorkReason(e.target.value)}
               placeholder="Reason (e.g. Heavy Grout Stain Removal)"
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-xs text-white focus:border-yellow-500 focus:outline-none"
+              className="w-full bg-slate-50 border border-gray-200 rounded-2xl p-3 text-xs text-slate-900 font-medium focus:border-[#E8B619] focus:bg-white focus:outline-none"
             />
 
             <textarea
@@ -536,30 +536,30 @@ export default function AgencyJobDetailClientView({ job, agencyId, teamMembers }
               onChange={(e) => setAddWorkDesc(e.target.value)}
               placeholder="Detailed description of extra work required..."
               rows={3}
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-xs text-white focus:border-yellow-500 focus:outline-none"
+              className="w-full bg-slate-50 border border-gray-200 rounded-2xl p-3 text-xs text-slate-900 font-medium focus:border-[#E8B619] focus:bg-white focus:outline-none"
             />
 
             <div>
-              <label className="text-xs text-neutral-400 block mb-1">Requested Amount (₹)</label>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Requested Amount (₹)</label>
               <input
                 type="number"
                 value={addWorkAmount}
                 onChange={(e) => setAddWorkAmount(Number(e.target.value))}
-                className="w-full bg-neutral-950 border border-neutral-800 rounded-xl p-3 text-xs text-white focus:border-yellow-500 focus:outline-none"
+                className="w-full bg-slate-50 border border-gray-200 rounded-2xl p-3 text-xs text-slate-900 font-medium focus:border-[#E8B619] focus:bg-white focus:outline-none"
               />
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setShowAddWorkModal(false)}
-                className="px-4 py-2 bg-neutral-800 text-neutral-300 text-xs font-semibold rounded-xl hover:bg-neutral-700 transition"
+                className="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-2xl hover:bg-slate-200 transition cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleRequestAddWork}
                 disabled={loading}
-                className="px-4 py-2 bg-yellow-500 hover:bg-yellow-400 text-black text-xs font-bold rounded-xl transition"
+                className="px-4 py-2 bg-[#FACC15] hover:bg-[#EAB308] text-black text-xs font-black rounded-2xl transition cursor-pointer"
               >
                 Submit Request
               </button>
