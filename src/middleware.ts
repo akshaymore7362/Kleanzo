@@ -31,8 +31,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(`https://${request.headers.get('host')}${pathname}`, 301);
   }
 
-  // Redirect logged-in users away from /login only if explicit switch is NOT requested
-  if ((pathname === '/login' || pathname === '/register') && session && !searchParams.has('switch')) {
+  // Allow users to visit /login to switch accounts or login with new credentials freely
+  if (pathname === '/register' && session && !searchParams.has('switch')) {
     let redirectUrl = '/bookings';
     if (['ADMIN', 'SUPER_ADMIN', 'OPERATIONS', 'FINANCE'].includes(session.role)) {
       redirectUrl = '/admin/dashboard';

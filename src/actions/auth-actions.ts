@@ -51,6 +51,7 @@ export async function loginAction(input: LoginInput) {
       customerId,
     });
 
+    await clearSessionCookie();
     await setSessionCookie(token);
 
     await logAudit({
@@ -137,6 +138,7 @@ export async function instantModuleLoginAction(targetRole: 'ADMIN' | 'AGENCY_ADM
       customerId,
     });
 
+    await clearSessionCookie();
     await setSessionCookie(token);
 
     await logAudit({
@@ -215,6 +217,7 @@ export async function registerCustomerAction(input: RegisterCustomerInput) {
       customerId: user.customerProfile?.id,
     });
 
+    await clearSessionCookie();
     await setSessionCookie(token);
 
     await logAudit({
