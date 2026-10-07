@@ -189,17 +189,17 @@ export default function CustomerBookingsPage() {
   };
 
   const handleSubmitIssue = () => {
-    showNotice('Issue reported. Kleanzo Operations & Partner Agency notified for rework.');
+    showNotice('Issue reported. Kleanzo Operations notified for quality rework.');
     setShowIssueModal(false);
     handleUpdateStatus('CORRECTION_REQUIRED', 'Rework request created.');
   };
 
-  // Timeline matching Prompt
+  // Timeline matching Prompt (Phase 25)
   const timelineSteps = [
     { title: 'Booking Confirmed', date: '24 Sep 2026', time: '09:30 AM', status: 'COMPLETED' },
-    { title: 'Partner Confirmed', date: '24 Sep 2026', time: '09:45 AM', status: 'COMPLETED' },
-    { title: 'Team Assigned', date: '24 Sep 2026', time: '10:00 AM', status: 'COMPLETED' },
-    { title: 'Team En Route', date: '24 Sep 2026', time: '10:15 AM', status: 'COMPLETED' },
+    { title: 'Kleanzo Confirmed', date: '24 Sep 2026', time: '09:45 AM', status: 'COMPLETED' },
+    { title: 'Professional Assigned', date: '24 Sep 2026', time: '10:00 AM', status: 'COMPLETED' },
+    { title: 'Professional En Route', date: '24 Sep 2026', time: '10:15 AM', status: 'COMPLETED' },
     {
       title: 'Cleaning In Progress',
       date: '24 Sep 2026',

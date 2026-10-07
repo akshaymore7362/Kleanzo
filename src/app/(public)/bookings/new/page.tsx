@@ -955,7 +955,7 @@ export default function CustomerBookingWizard() {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-xl font-black text-black">Where should we provide the service?</h2>
-                    <p className="text-xs text-gray-500 font-medium mt-1">Use GPS or enter address manually to find eligible Kleanzo partners</p>
+                    <p className="text-xs text-gray-500 font-medium mt-1">Use GPS or enter address manually to verify service coverage for your area</p>
                   </div>
 
                   {/* Mode Buttons */}

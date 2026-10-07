@@ -1,3 +1,4 @@
+import React from 'react';
 import HomePage, { metadata } from './(public)/page';
 import PublicLayout from './(public)/layout';
 
