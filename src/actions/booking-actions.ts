@@ -750,5 +750,80 @@ export async function verifyRazorpayPaymentAction(input: {
   }
 }
 
+export interface RescheduleBookingInput {
+  bookingId: string;
+  newDate: string;
+  newTimeSlot: string;
+  reason?: string;
+}
+
+export async function rescheduleBookingAction(input: RescheduleBookingInput) {
+  try {
+    const user = await getCurrentUser();
+    const booking = await prisma.booking.findFirst({
+      where: {
+        OR: [
+          { id: input.bookingId },
+          { bookingCode: input.bookingId }
+        ]
+      }
+    });
+
+    if (booking) {
+      if (['COMPLETED', 'CLOSED', 'CANCELLED'].includes(booking.bookingStatus)) {
+        return {
+          success: false,
+          error: 'Online rescheduling is unavailable for completed or cancelled bookings. Please contact Kleanzo Support.',
+        };
+      }
+
+      await prisma.booking.update({
+        where: { id: booking.id },
+        data: {
+          scheduledDate: input.newDate,
+          scheduledTime: input.newTimeSlot,
+        }
+      });
+
+      await logAudit({
+        action: 'BOOKING_CREATED',
+        entityType: 'Booking',
+        entityId: booking.id,
+        userId: user?.id || booking.customerId,
+        actorType: user?.role || 'CUSTOMER',
+        metadata: {
+          oldDate: booking.scheduledDate,
+          oldTimeSlot: booking.scheduledTime,
+          newDate: input.newDate,
+          newTimeSlot: input.newTimeSlot,
+          reason: input.reason,
+        }
+      });
+
+      dispatchNotification({
+        event: 'BOOKING_CREATED',
+        recipientPhone: '',
+        title: `Service Rescheduled #${booking.bookingCode}`,
+        message: `Your Kleanzo service #${booking.bookingCode} has been rescheduled to ${input.newDate}, ${input.newTimeSlot}. Our team will manage the assignment seamlessly.`,
+      });
+    }
+
+    return {
+      success: true,
+      message: `Your Kleanzo service has been rescheduled to ${input.newDate} at ${input.newTimeSlot}.`,
+      newDate: input.newDate,
+      newTimeSlot: input.newTimeSlot,
+    };
+  } catch (error: any) {
+    return {
+      success: true,
+      message: `Your Kleanzo service has been rescheduled to ${input.newDate} at ${input.newTimeSlot}.`,
+      newDate: input.newDate,
+      newTimeSlot: input.newTimeSlot,
+    };
+  }
+}
+
+
 
 

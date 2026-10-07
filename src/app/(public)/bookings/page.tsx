@@ -23,8 +23,10 @@ import {
   AlertCircle,
   X,
   HelpCircle,
+  Calendar,
+  CalendarDays,
 } from 'lucide-react';
-import { updateBookingStatusAction, submitCustomerRatingAction } from '@/actions/booking-actions';
+import { updateBookingStatusAction, submitCustomerRatingAction, rescheduleBookingAction } from '@/actions/booking-actions';
 import type { WorkflowStatus } from '@/lib/booking/workflow-engine';
 
 interface BookingRecord {
@@ -74,6 +76,30 @@ export default function CustomerBookingsPage() {
   // Issue Reporting Modal State
   const [showIssueModal, setShowIssueModal] = useState(false);
   const [issueDescription, setIssueDescription] = useState('');
+
+  // Reschedule Modal State (Phase 18 & 19)
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState('28 Sep 2026');
+  const [rescheduleTimeSlot, setRescheduleTimeSlot] = useState('10:00 AM - 12:00 PM');
+  const [rescheduleLoading, setRescheduleLoading] = useState(false);
+
+  const handleConfirmReschedule = async () => {
+    setRescheduleLoading(true);
+    const targetBooking = allBookings[0] || defaultDemoBooking;
+    const res = await rescheduleBookingAction({
+      bookingId: targetBooking.id,
+      newDate: rescheduleDate,
+      newTimeSlot: rescheduleTimeSlot,
+    });
+    setRescheduleLoading(false);
+    setShowRescheduleModal(false);
+    if (res.success) {
+      setAllBookings(prev => prev.map(b => b.id === targetBooking.id ? { ...b, scheduledDate: rescheduleDate, scheduledTime: rescheduleTimeSlot } : b));
+      setNoticeMessage(res.message || `Your Kleanzo service has been rescheduled to ${rescheduleDate} at ${rescheduleTimeSlot}.`);
+    } else {
+      setNoticeMessage(res.error || 'Rescheduling is currently unavailable for this booking.');
+    }
+  };
 
   // Default Demo Booking matching Image exact ID KZ-PNE001
   const defaultDemoBooking: BookingRecord = {
@@ -230,6 +256,14 @@ export default function CustomerBookingsPage() {
 
           <div className="flex flex-wrap items-center gap-3">
             <button
+              type="button"
+              onClick={() => setShowRescheduleModal(true)}
+              className="bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <CalendarDays className="w-3.5 h-3.5 text-amber-400" /> Reschedule Service
+            </button>
+
+            <button
               onClick={loadBookings}
               className="bg-gray-100 hover:bg-gray-200 text-black font-bold text-xs px-3.5 py-2 rounded-xl border border-gray-300 transition-all flex items-center gap-1.5"
             >
@@ -315,6 +349,30 @@ export default function CustomerBookingsPage() {
           </div>
         </div>
 
+        {/* PRE-SERVICE CHECKLIST CARD (Phase 23 Prompt) */}
+        <div className="bg-amber-50/80 border border-amber-200 rounded-3xl p-6 shadow-xs space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-wider text-amber-950 bg-[#FEF08A] px-2.5 py-0.5 rounded-full border border-[#FDE047]">
+              BEFORE OUR PROFESSIONAL ARRIVES
+            </span>
+            <span className="text-xs font-black text-slate-900">Pre-Service Checklist</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs text-slate-700 font-semibold">
+            <div className="flex items-center gap-2 bg-white p-3 rounded-2xl border border-amber-100 shadow-2xs">
+              <span className="text-emerald-600 font-black">✓</span> Access area kept clear
+            </div>
+            <div className="flex items-center gap-2 bg-white p-3 rounded-2xl border border-amber-100 shadow-2xs">
+              <span className="text-emerald-600 font-black">✓</span> Valuables safely stored
+            </div>
+            <div className="flex items-center gap-2 bg-white p-3 rounded-2xl border border-amber-100 shadow-2xs">
+              <span className="text-emerald-600 font-black">✓</span> Water & electricity available
+            </div>
+            <div className="flex items-center gap-2 bg-white p-3 rounded-2xl border border-amber-100 shadow-2xs">
+              <span className="text-emerald-600 font-black">✓</span> Society gate pass ready
+            </div>
+          </div>
+        </div>
+
         {/* 3-COLUMN CONTENT GRID: LIVE UPDATE + BEFORE/AFTER PHOTOS + NEED HELP */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Live Update Box */}
@@ -325,7 +383,7 @@ export default function CustomerBookingsPage() {
               </span>
               <h3 className="text-sm font-black text-black mt-3">Cleaning Execution</h3>
               <p className="text-xs text-gray-600 font-medium leading-relaxed mt-1">
-                Apex Cleaning Services is currently cleaning your home. We will notify you once cleaning and supervisor QC are completed.
+                Kleanzo Certified Professionals are currently cleaning your home. We will notify you once cleaning and supervisor QC are completed.
               </p>
             </div>
 
@@ -510,6 +568,83 @@ export default function CustomerBookingsPage() {
             >
               REQUEST REWORK
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* RESCHEDULE SERVICE MODAL (Phase 18 & 19 Prompt) */}
+      {showRescheduleModal && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-gray-200 shadow-2xl space-y-6 relative animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <div>
+                <span className="text-[10px] font-black uppercase text-amber-900 bg-[#FEF08A] px-2.5 py-1 rounded-full">
+                  Kleanzo Schedule Management
+                </span>
+                <h3 className="text-lg font-black text-slate-900 mt-1">Reschedule Your Service</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowRescheduleModal(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 text-slate-600 font-black text-sm flex items-center justify-center hover:bg-gray-200 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs font-bold text-slate-700">
+              <div>
+                <label className="block mb-1 text-slate-900">Select New Date:</label>
+                <select
+                  value={rescheduleDate}
+                  onChange={(e) => setRescheduleDate(e.target.value)}
+                  className="w-full bg-slate-50 border border-gray-200 rounded-xl p-3 font-extrabold focus:outline-none focus:ring-2 focus:ring-[#FACC15]"
+                >
+                  <option value="28 Sep 2026">28 Sep 2026 (Tomorrow)</option>
+                  <option value="29 Sep 2026">29 Sep 2026</option>
+                  <option value="30 Sep 2026">30 Sep 2026</option>
+                  <option value="01 Oct 2026">01 Oct 2026</option>
+                  <option value="02 Oct 2026">02 Oct 2026</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block mb-1 text-slate-900">Select New Time Slot:</label>
+                {['09:00 AM - 11:00 AM', '10:00 AM - 12:00 PM', '02:00 PM - 04:00 PM', '04:00 PM - 06:00 PM'].map((slot) => (
+                  <button
+                    key={slot}
+                    type="button"
+                    onClick={() => setRescheduleTimeSlot(slot)}
+                    className={`w-full p-3 mb-2 rounded-xl border text-left flex justify-between items-center transition ${
+                      rescheduleTimeSlot === slot
+                        ? 'bg-[#FEF08A] text-amber-950 border-[#FACC15] ring-2 ring-[#FACC15]'
+                        : 'bg-gray-50 text-slate-700 border-gray-200 hover:bg-gray-100'
+                    }`}
+                  >
+                    <span>{slot}</span>
+                    {rescheduleTimeSlot === slot && <span>✓</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => setShowRescheduleModal(false)}
+                className="px-4 py-2 bg-gray-100 text-slate-600 rounded-xl font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={rescheduleLoading}
+                onClick={handleConfirmReschedule}
+                className="px-6 py-3 bg-[#FACC15] hover:bg-[#EAB308] text-slate-950 font-black rounded-xl uppercase tracking-wider shadow-md cursor-pointer"
+              >
+                {rescheduleLoading ? 'Updating...' : 'Confirm Reschedule →'}
+              </button>
+            </div>
           </div>
         </div>
       )}

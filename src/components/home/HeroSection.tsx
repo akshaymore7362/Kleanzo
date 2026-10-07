@@ -18,6 +18,16 @@ import {
 export function HeroSection() {
   const [selectedCity, setSelectedCity] = useState('Wakad, Pune');
   const [selectedServiceQuick, setSelectedServiceQuick] = useState('3 BHK Deep Cleaning');
+  const [showHelpMeChoose, setShowHelpMeChoose] = useState(false);
+  
+  // Help Me Choose Wizard State
+  const [helpStep, setHelpStep] = useState(1);
+  const [helpAnswers, setHelpAnswers] = useState({
+    cleaningType: 'New Home',
+    condition: 'Medium',
+    issueType: 'Dust & Construction Residue',
+    propertySize: '2 BHK (approx 1,100 sq.ft)',
+  });
 
   const cityOptions = ['Wakad, Pune', 'Baner, Pune', 'Hinjewadi, Pune', 'Kharadi, Pune', 'Kothrud, Pune', 'Viman Nagar, Pune'];
   const quickServiceOptions = [
@@ -47,15 +57,15 @@ export function HeroSection() {
 
             {/* Headline */}
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-tight text-slate-900 font-sans">
-              Professional Cleaning. <br />
+              Professional Cleaning Services, <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700">
-                Trusted Kleanzo Partners.
+                Managed by Kleanzo.
               </span>
             </h1>
 
             {/* Subtitle */}
             <p className="text-base sm:text-lg text-slate-600 font-semibold leading-relaxed max-w-2xl">
-              Connect with background-verified fulfillment partners in Pune. Transparent Kleanzo pricing, supervisor quality checks, and 100% satisfaction guarantee.
+              Professional deep cleaning for your home & commercial spaces. Transparent Kleanzo pricing, supervisor quality checks, and 100% managed service guarantee.
             </p>
 
             {/* CTAs */}
@@ -64,13 +74,22 @@ export function HeroSection() {
                 href="/bookings/new"
                 className="bg-[#FACC15] hover:bg-[#EAB308] text-black font-black text-sm px-8 py-4 rounded-2xl shadow-xl transition-all uppercase tracking-wider flex items-center gap-2 transform hover:scale-102 cursor-pointer"
               >
-                <span>BOOK A CLEANING</span>
+                <span>BOOK A SERVICE</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
 
+              <button
+                type="button"
+                onClick={() => { setHelpStep(1); setShowHelpMeChoose(true); }}
+                className="bg-slate-900 hover:bg-slate-800 text-white font-black text-sm px-7 py-4 rounded-2xl shadow-lg transition-all uppercase tracking-wider flex items-center gap-2 cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4 text-amber-400 fill-amber-400" />
+                <span>HELP ME CHOOSE</span>
+              </button>
+
               <Link
                 href="/services"
-                className="bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-300 font-extrabold text-sm px-7 py-4 rounded-2xl transition-all uppercase tracking-wider flex items-center gap-2 cursor-pointer"
+                className="bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-300 font-extrabold text-sm px-6 py-4 rounded-2xl transition-all uppercase tracking-wider flex items-center gap-2 cursor-pointer"
               >
                 <span>EXPLORE SERVICES</span>
               </Link>
@@ -182,9 +201,9 @@ export function HeroSection() {
                   </div>
                   <div>
                     <span className="text-[10px] font-black uppercase text-amber-950 bg-[#FEF08A] px-2 py-0.5 rounded-full border border-[#FDE047]">
-                      VERIFIED PARTNERS READY
+                      KLEANZO MANAGED TEAMS
                     </span>
-                    <p className="text-xs font-black text-slate-900 mt-1">📍 Active in {selectedCity}</p>
+                    <p className="text-xs font-black text-slate-900 mt-1">📍 Active Service in {selectedCity}</p>
                   </div>
                 </div>
                 <div className="w-3 h-3 rounded-full bg-emerald-500 animate-ping shrink-0" />
@@ -194,7 +213,155 @@ export function HeroSection() {
 
         </div>
       </div>
+
+      {/* HELP ME CHOOSE MODAL (Phase 4 Prompt) */}
+      {showHelpMeChoose && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-gray-200 shadow-2xl space-y-6 relative animate-in fade-in zoom-in duration-200">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <div>
+                <span className="text-[10px] font-black uppercase text-amber-900 bg-[#FEF08A] px-2.5 py-1 rounded-full">
+                  Kleanzo Service Advisor • Step {helpStep} of 4
+                </span>
+                <h3 className="text-lg font-black text-slate-900 mt-1">Help Me Choose The Right Service</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowHelpMeChoose(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 text-slate-600 font-black text-sm flex items-center justify-center hover:bg-gray-200 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Step 1: Cleaning Requirement */}
+            {helpStep === 1 && (
+              <div className="space-y-4">
+                <label className="block text-xs font-black text-slate-800 uppercase tracking-wider">
+                  1. What do you need cleaned?
+                </label>
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  {['New Home / Move-In', 'Renovation / Interior', 'Office / Commercial', 'Furniture / Sofa', 'Bathroom / Kitchen', 'Other Heavy Stain'].map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => {
+                        setHelpAnswers({ ...helpAnswers, cleaningType: option });
+                        setHelpStep(2);
+                      }}
+                      className={`p-3.5 rounded-2xl border text-left font-bold transition flex items-center justify-between ${
+                        helpAnswers.cleaningType === option
+                          ? 'bg-[#FEF08A] text-amber-950 border-[#FACC15] ring-2 ring-[#FACC15]'
+                          : 'bg-gray-50 text-slate-700 border-gray-200 hover:bg-gray-100'
+                      }`}
+                    >
+                      <span>{option}</span>
+                      {helpAnswers.cleaningType === option && <span>✓</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Property Condition */}
+            {helpStep === 2 && (
+              <div className="space-y-4">
+                <label className="block text-xs font-black text-slate-800 uppercase tracking-wider">
+                  2. What is the current condition of the area?
+                </label>
+                <div className="space-y-3 text-xs">
+                  {[
+                    { label: 'Light', desc: 'Regular dust, light surface maintenance' },
+                    { label: 'Medium', desc: 'Occupied home, stains on kitchen/bathroom surfaces' },
+                    { label: 'Heavy / Post-Construction', desc: 'Cement residue, paint spots, glue, heavy debris' },
+                  ].map((item) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={() => {
+                        setHelpAnswers({ ...helpAnswers, condition: item.label });
+                        setHelpStep(3);
+                      }}
+                      className="w-full p-4 rounded-2xl border text-left bg-gray-50 border-gray-200 hover:bg-amber-50 hover:border-[#FACC15] transition"
+                    >
+                      <div className="font-black text-slate-900">{item.label}</div>
+                      <div className="text-[11px] text-slate-500 font-medium">{item.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Specific Issue / Stain Type */}
+            {helpStep === 3 && (
+              <div className="space-y-4">
+                <label className="block text-xs font-black text-slate-800 uppercase tracking-wider">
+                  3. What specific issues or stains are present?
+                </label>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {['Dust & Dirt', 'Paint Residue', 'Glue / Fevicol', 'Cement Stains', 'Hard Water Stains', 'Grout Residue'].map((stain) => (
+                    <button
+                      key={stain}
+                      type="button"
+                      onClick={() => {
+                        setHelpAnswers({ ...helpAnswers, issueType: stain });
+                        setHelpStep(4);
+                      }}
+                      className="p-3 rounded-xl border border-gray-200 bg-gray-50 font-bold text-slate-800 hover:bg-[#FEF08A] hover:border-[#FACC15] transition"
+                    >
+                      {stain}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Recommendation Result */}
+            {helpStep === 4 && (
+              <div className="space-y-4 text-xs">
+                <div className="bg-emerald-50 border border-emerald-200 p-5 rounded-2xl space-y-2">
+                  <span className="text-[10px] font-black uppercase text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                    Recommended Kleanzo Service
+                  </span>
+                  <h4 className="text-base font-black text-slate-900">
+                    {helpAnswers.cleaningType.includes('Renovation') || helpAnswers.issueType.includes('Cement')
+                      ? 'Post-Construction Deep Cleaning Package'
+                      : helpAnswers.cleaningType.includes('Furniture')
+                      ? 'Sofa & Upholstery Shampooing Package'
+                      : 'Full House Systematic Deep Cleaning (3 BHK)'}
+                  </h4>
+                  <p className="text-slate-600 font-medium text-[11px]">
+                    Includes mechanized floor scrubbing, stain treatment for {helpAnswers.issueType}, supervisor QC inspection, and 100% Kleanzo satisfaction guarantee.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => setHelpStep(1)}
+                    className="px-4 py-2 bg-gray-100 text-slate-600 rounded-xl font-bold"
+                  >
+                    Start Over
+                  </button>
+                  <Link
+                    href={`/bookings/new?category=Deep Cleaning&recommendation=${encodeURIComponent(helpAnswers.cleaningType)}`}
+                    onClick={() => setShowHelpMeChoose(false)}
+                    className="px-6 py-3 bg-[#FACC15] hover:bg-[#EAB308] text-slate-950 font-black rounded-xl uppercase tracking-wider shadow-md"
+                  >
+                    Book Recommended Service →
+                  </Link>
+                </div>
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
+
     </section>
   );
 }
+
 
